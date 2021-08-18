@@ -1,0 +1,19 @@
+#apiVersion: apps/v1 
+#kind: Deployment    
+#metadata:              
+#  name: dockerdemo
+#spec:                
+#  selector:         
+#    matchLabels:
+#      app: dockerdemo
+#  replicas: 3        
+# template:
+#    metadata:
+#      labels:        
+#        app: dockerdemo
+#    spec:
+#      containers:
+#        - name: dockerdemo
+#          image:  dockerdemo:1.0
+#          ports:
+#            - containerPort: 8080
