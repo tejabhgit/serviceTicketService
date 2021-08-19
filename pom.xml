@@ -31,12 +31,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
 		<dependency>
-			<groupId>io.nats</groupId>
-			<artifactId>jnats</artifactId>
-			<version>2.6.8</version>
-		</dependency>
+         <groupId>io.nats</groupId>
+         <artifactId>jnats</artifactId>
+          <version>2.11.4</version>
+          </dependency>
 		
 		<!-- Swagger UI -->
 		<dependency>

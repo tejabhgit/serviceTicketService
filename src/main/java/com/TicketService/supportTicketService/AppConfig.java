@@ -1,15 +1,22 @@
 package com.TicketService.supportTicketService;
 
-import java.nio.charset.StandardCharsets;
 
+import java.time.Duration;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
 import io.nats.client.Connection;
-import io.nats.client.Dispatcher;
+import io.nats.client.JetStream;
+import io.nats.client.JetStreamManagement;
+import io.nats.client.JetStreamSubscription;
+import io.nats.client.Message;
 import io.nats.client.Nats;
+import io.nats.client.api.PublishAck;
+import io.nats.client.api.StorageType;
+import io.nats.client.api.StreamConfiguration;
+import io.nats.client.api.StreamInfo;
+import io.nats.client.support.JsonUtils;
 
 @Configuration
 @ComponentScan(basePackages = "com.TicketService")
@@ -18,23 +25,27 @@ public class AppConfig {
 	@Bean
 	CommandLineRunner commandLineRunner() {
 		return args -> {
-			Connection connect =  Nats.connect("nats://localhost:4222");
-			/*Dispatcher dispatcher = connect.createDispatcher(message -> {
-				System.out.println(String.format("Received Message[%s] from [%s]",
-						new String(message.getData(), StandardCharsets.UTF_8), message.getSubject()));
-			});*/  
-			//dispatcher.subscribe("com.TicketService.*");
-			//connect.publish("foo.bar", "Hi there!".getBytes());
-			//Subscription sub = connect.subscribe("foo.bar");
-			 //Message msg = sub.nextMessage(Duration.ofSeconds(1));
-			
-			Dispatcher d = connect.createDispatcher((msg) -> {
-		        System.out.printf("Received message \"%s\" on subject \"%s\"\n", 
-		                                new String(msg.getData(), StandardCharsets.UTF_8), 
-		                                msg.getSubject());
-		    });
-		    d.subscribe("com.TicketService.*");
-//			
+			Connection connect =  Nats.connect("nats://localhost:4222");		
+            JetStreamManagement jsm = connect.jetStreamManagement();
+
+            // Build the configuration
+            StreamConfiguration streamConfig = StreamConfiguration.builder()
+                    .name("hello")
+                    .subjects("world")
+                    .storageType(StorageType.Memory)
+                    .build();
+            // Create the stream
+            StreamInfo streamInfo = jsm.addStream(streamConfig);
+            JsonUtils.printFormatted(streamInfo);
+
+            JetStream js = connect.jetStream();
+            PublishAck ack = js.publish("world", "one".getBytes());
+            JsonUtils.printFormatted(ack);
+
+            ack = js.publish("world", "two".getBytes());
+            JsonUtils.printFormatted(ack);
+
+//        
 			
 		};
 	}
