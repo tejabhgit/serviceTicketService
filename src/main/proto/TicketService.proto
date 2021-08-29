@@ -3,14 +3,10 @@ option java_multiple_files = true;
 
 package com.example.grpc.server.grpcserver;
 
-message TicketRequest {
-    int32 number = 1;
-    bool last = 2;
-    bool first = 3;
-    int32 num = 4;
-    string content = 5;  
+message GetTicketByIdRequest {
+    int32 id = 1;
+    
 }
-
 
 message CurrentAgent{
    string userId = 1;
@@ -35,26 +31,44 @@ message Content{
     CurrentAgent currentAgent = 1;
     Category Category = 2;
     Device device = 3;
-    string id = 4;
-    string issueOpened = 5;
-    string issueClosed = 6;
+    int32 id = 4;
+    int32 issueOpened = 5;
+    int32 issueClosed = 6;
     string state = 7;
     string description = 8;
 }
 
 
-message TicketResponse {
-    string greeting = 1;
-    string last = 2;
-    string totalElements = 3;
-    string totalPages = 4;
-    string numberOfElements = 5;
-    string first = 6;
-    string number = 7;
-    string empty = 8;
+message GetTicketByIdResponse {
+    int32 id = 1;
+    bool last = 2;
+    int32 totalElements = 3;
+    int32 totalPages = 4;
+    int32 numberOfElements = 5;
+    bool first = 6;
+    int32 number = 7;
+    bool empty = 8;
     Content content= 9;
 }
 
+
+message AddTicketRequest {
+    int32 id = 1;
+    bool last = 2;
+    int32 totalElements = 3;
+    int32 totalPages = 4;
+    int32 numberOfElements = 5;
+    bool first = 6;
+    int32 number = 7;
+    bool empty = 8;
+    repeated Content content= 9;
+}
+
+message AddTicketReponse {
+    int32 responseId = 1;
+}
+
 service TicketService {
-    rpc getTicketService(TicketRequest) returns (TicketResponse);
+    rpc getTicketById(GetTicketByIdRequest) returns (GetTicketByIdResponse);
+    rpc addTicket(AddTicketRequest) returns (AddTicketReponse);
 }

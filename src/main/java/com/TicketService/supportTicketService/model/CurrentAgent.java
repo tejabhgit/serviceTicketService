@@ -1,5 +1,10 @@
-package com.TicketService.supportTicketService.vo;
+package com.TicketService.supportTicketService.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
 public class CurrentAgent {
 
 	private String userId;

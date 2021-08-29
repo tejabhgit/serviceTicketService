@@ -1,4 +1,4 @@
-package com.TicketService.supportTicketService.vo;
+package com.TicketService.supportTicketService.model;
 
 public class Category {
 
