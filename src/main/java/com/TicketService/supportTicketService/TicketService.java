@@ -16,6 +16,7 @@ import com.example.grpc.server.grpcserver.*;
 @GrpcService
 public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(TicketService.class);
 	
 	@Autowired
@@ -110,5 +111,19 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 			}
 			 
 	  }
+	
+	@Override
+	public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
+
+		try {
+			repository.deleteById(request.getId());
+			DeleteTicketResponse deleteTicketResponse = DeleteTicketResponse.newBuilder().setResponse("Ticket deleted with id : "+request.getId()).build();
+			responseObserver.onNext(deleteTicketResponse);
+		    responseObserver.onCompleted();	
+		}catch(Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+
 	}
 

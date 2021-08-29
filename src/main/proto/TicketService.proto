@@ -68,7 +68,18 @@ message AddTicketReponse {
     int32 responseId = 1;
 }
 
+
+
+message DeleteTicketRequest {
+    int32 id = 1;   
+}
+
+message DeleteTicketResponse {
+    string response = 1;   
+}
+
 service TicketService {
     rpc getTicketById(GetTicketByIdRequest) returns (GetTicketByIdResponse);
     rpc addTicket(AddTicketRequest) returns (AddTicketReponse);
+    rpc deleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
 }
