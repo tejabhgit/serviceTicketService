@@ -3,7 +3,7 @@ spring:
     name: supportTicketService
   data:
     mongodb:
-      host: rps-support-ticket-db
+      host: rpssupportticketdb
       database: TicketService
       port: 27017
 #      username: '${MONGO_USERNAME}'

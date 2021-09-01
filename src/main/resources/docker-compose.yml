@@ -1,8 +1,8 @@
 version: "3"
 services:
- mymongodb:
+ rpssupportticketdb:
    image: mongo:latest
-   container_name: "rps-support-ticket-db"
+   container_name: "rpssupportticketdb"
    ports:
      - 27017:27017
  support-ticketservice:
@@ -11,6 +11,6 @@ services:
    ports:
      - 8080:8080
    links:
-     - rps-support-ticket-db 
+     - rpssupportticketdb 
      
      
