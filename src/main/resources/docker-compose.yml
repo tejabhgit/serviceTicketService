@@ -2,7 +2,7 @@ version: "3"
 services:
  mymongodb:
    image: mongo:latest
-   container_name: mymongodb
+   container_name: "javatechiemongodb"
    ports:
      - 27017:27017
  support-ticketservice:
