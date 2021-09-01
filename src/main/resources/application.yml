@@ -3,7 +3,7 @@ spring:
     name: supportTicketService
   data:
     mongodb:
-      host: javatechiemongodb
+      host: rps-support-ticket-db
       database: TicketService
       port: 27017
 #      username: '${MONGO_USERNAME}'
@@ -17,3 +17,6 @@ logging:
     console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
     file: "%d %p %c{1.} [%t] %m%n"
   file: app.log
+  
+  
+  

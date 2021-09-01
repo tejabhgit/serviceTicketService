@@ -2,7 +2,7 @@ version: "3"
 services:
  mymongodb:
    image: mongo:latest
-   container_name: "javatechiemongodb"
+   container_name: "rps-support-ticket-db"
    ports:
      - 27017:27017
  support-ticketservice:
@@ -11,4 +11,6 @@ services:
    ports:
      - 8080:8080
    links:
-     - mymongodb 
+     - rps-support-ticket-db 
+     
+     
