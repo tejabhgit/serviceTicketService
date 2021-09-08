@@ -8,9 +8,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "Category")
-public class Category {
+@Document(collection = "SupportTicket")
+public class SupportTicket {
 
-	private String name;
+	private String id;
+	private CurrentAgent current_agent;
+	private Category category;
+	private String deviceId;
+	private String issue_opened;
+	private String issue_closed;
+	private String state;
 	private String description;
+	
 }

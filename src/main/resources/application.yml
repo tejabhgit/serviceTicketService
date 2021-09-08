@@ -3,11 +3,9 @@ spring:
     name: supportTicketService
   data:
     mongodb:
-      host: rpssupportticketdb
-      database: TicketService
+      host: localhost
+      database: rps_ticket
       port: 27017
-#      username: '${MONGO_USERNAME}'
-#      password: '${MONGO_PASSWORD}'
       
 logging:
   level:

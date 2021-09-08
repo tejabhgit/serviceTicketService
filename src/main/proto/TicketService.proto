@@ -31,7 +31,7 @@ message Content{
     CurrentAgent currentAgent = 1;
     Category Category = 2;
     Device device = 3;
-    int32 id = 4;
+    string id = 4;
     int32 issueOpened = 5;
     int32 issueClosed = 6;
     string state = 7;
@@ -53,7 +53,7 @@ message GetTicketByIdResponse {
 
 
 message AddTicketRequest {
-    int32 id = 1;
+    string id = 1;
     bool last = 2;
     int32 totalElements = 3;
     int32 totalPages = 4;
