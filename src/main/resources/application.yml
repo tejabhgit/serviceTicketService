@@ -1,12 +1,11 @@
 spring:
   application:
-    name: supportTicketService
+    name: svc-rps-support-ticket
   data:
-    mongodb:
+    mongo-database:
       host: localhost
-      database: rps_ticket
       port: 27017
-      
+
 logging:
   level:
     org.springframework: ERROR

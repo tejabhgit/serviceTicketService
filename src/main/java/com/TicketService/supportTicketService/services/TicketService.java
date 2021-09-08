@@ -72,6 +72,7 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     public void addTicket(AddTicketRequest request, StreamObserver<AddTicketReponse> responseObserver) {
 
         try {
+            log.info("Creating a Support Ticket resource {}", request.getId());
             Ticket ticket = new Ticket();
             ticket.setId(request.getId());
             ticket.setLast(request.getLast());
