@@ -2,7 +2,6 @@ package com.TicketService.supportTicketService.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,6 @@ import com.TicketService.supportTicketService.repository.TicketRepository;
 @RestController
 public class TicketServiceController {
 
-
 	@Autowired
 	private TicketRepository repository;
 
@@ -33,7 +31,6 @@ public class TicketServiceController {
 		}catch(Exception  e) {
 			return new ResponseEntity<>("Not Added Successfully", HttpStatus.BAD_REQUEST);
 		}
-
 	}
 
 	@GetMapping("/findAllTickets")
@@ -42,19 +39,17 @@ public class TicketServiceController {
 	}
 
 	@GetMapping("/findAllTickets/{id}")
-	public ResponseEntity<Object> getTicket(@PathVariable int id) {
+	public ResponseEntity<Object> getTicket(@PathVariable String id) {
 		Optional<Ticket> ticket= repository.findById(id);
 		if (repository.findById(id).empty() != null) {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ticket);
 		} else {
 			return ResponseEntity.status(HttpStatus.OK).body(ticket);
-
 		}
-
 	}
 
 	@DeleteMapping("/delete/{id}")
-	public String deleteTicket(@PathVariable int id) {
+	public String deleteTicket(@PathVariable String id) {
 		repository.deleteById(id);
 		return "Ticket deleted with id : " + id;
 	}

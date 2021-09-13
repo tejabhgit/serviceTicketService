@@ -1,11 +1,17 @@
-package com.TicketService.supportTicketService.nats.server;
+package com.TicketService.supportTicketService.nats.util;
 
-import io.nats.client.*;
+import io.nats.client.Connection;
+import io.nats.client.JetStream;
+import io.nats.client.JetStreamApiException;
+import io.nats.client.JetStreamManagement;
+import io.nats.client.JetStreamSubscription;
+import io.nats.client.Message;
 import io.nats.client.api.ConsumerInfo;
 import io.nats.client.api.StorageType;
 import io.nats.client.api.StreamConfiguration;
 import io.nats.client.api.StreamInfo;
 import io.nats.client.impl.NatsMessage;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -135,20 +141,20 @@ public class NatsJsUtils {
         publish(nc.jetStream(), subject, "data", count, false);
     }
 
-    public static void publish(JetStream js, String subject,String Message, int count) throws IOException, JetStreamApiException {
-        publish(js, subject, Message, count, false);
+    public static void publish(JetStream js, String subject, int count) throws IOException, JetStreamApiException {
+        publish(js, subject, "data", count, false);
     }
 
-//    public static void publish(JetStream js, String subject, String prefix, int count) throws IOException, JetStreamApiException {
-//        publish(js, subject, prefix, count, true);
-//    }
+    public static void publish(JetStream js, String subject, String prefix, int count) throws IOException, JetStreamApiException {
+        publish(js, subject, prefix, count, true);
+    }
 
     public static void publish(JetStream js, String subject, String prefix, int count, boolean verbose) throws IOException, JetStreamApiException {
         if (verbose) {
             System.out.print("Publish ->");
         }
         for (int x = 1; x <= count; x++) {
-            String data = prefix+" for the count " + x;
+            String data = prefix + x;
             if (verbose) {
                 System.out.print(" " + data);
             }
@@ -156,8 +162,7 @@ public class NatsJsUtils {
                     .subject(subject)
                     .data(data.getBytes(StandardCharsets.US_ASCII))
                     .build();
-            //js.publish(msg);
-            js.publishAsync(msg);
+            js.publish(msg);
         }
         if (verbose) {
             System.out.println(" <-");

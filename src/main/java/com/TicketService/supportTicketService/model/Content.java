@@ -12,9 +12,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Content {
 
 	String id;
-	CurrentAgent currentAgent;
-	Category category;
-	Device device;
+	private CurrentAgent currentAgent;
+	private Category category;
+	private Device device;
 	private int issueOpened	;
 	private int issueClosed;
 	private String state;

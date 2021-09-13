@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 
 @Slf4j
 @SpringBootApplication
-@OpenAPIDefinition(info = @Info(title = "svc-rps-support-ticket-API", version = "2.0", description = "Ticket Information"))
+@OpenAPIDefinition(info = @Info(title = "svc-rps-support-ticket API", version = "2.0", description = "Ticket Information"))
 public class SvcRpsSupportTicketApplication {
 
 	public static void main(String[] args) {

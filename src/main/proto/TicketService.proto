@@ -4,7 +4,7 @@ option java_multiple_files = true;
 package com.example.grpc.server.grpcserver;
 
 message GetTicketByIdRequest {
-    int32 id = 1;
+    string id = 1;
     
 }
 
@@ -40,7 +40,7 @@ message Content{
 
 
 message GetTicketByIdResponse {
-    int32 id = 1;
+    string id = 1;
     bool last = 2;
     int32 totalElements = 3;
     int32 totalPages = 4;
@@ -71,7 +71,7 @@ message AddTicketReponse {
 
 
 message DeleteTicketRequest {
-    int32 id = 1;   
+    string id = 1;
 }
 
 message DeleteTicketResponse {

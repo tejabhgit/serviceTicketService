@@ -1,6 +1,12 @@
 package com.TicketService.supportTicketService.nats.server;
 
-import io.nats.client.*;
+import io.nats.client.AuthHandler;
+import io.nats.client.Connection;
+import io.nats.client.Consumer;
+import io.nats.client.ErrorListener;
+import io.nats.client.Nats;
+import io.nats.client.Options;
+
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 

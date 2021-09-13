@@ -1,42 +1,21 @@
 package com.TicketService.supportTicketService.nats.server;
 
 
-import static com.TicketService.supportTicketService.nats.server.ExampleUtils.uniqueEnough;
-import static com.TicketService.supportTicketService.nats.server.NatsJsUtils.createStream;
-import static com.TicketService.supportTicketService.nats.server.NatsJsUtils.publish;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-
+import io.nats.client.Connection;
+import io.nats.client.JetStream;
+import io.nats.client.JetStreamManagement;
+import io.nats.client.Nats;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import io.nats.client.Connection;
-import io.nats.client.JetStream;
-import io.nats.client.JetStreamManagement;
-import io.nats.client.JetStreamSubscription;
-import io.nats.client.Message;
-import io.nats.client.Nats;
-import io.nats.client.PushSubscribeOptions;
-import io.nats.client.api.AckPolicy;
-import io.nats.client.api.ConsumerConfiguration;
-import io.nats.client.api.PublishAck;
-import io.nats.client.api.StorageType;
-import io.nats.client.api.StreamConfiguration;
-import io.nats.client.api.StreamInfo;
-import io.nats.client.support.JsonUtils;
-import io.nats.client.Connection;
-import io.nats.client.JetStream;
-import io.nats.client.Nats;
-import io.nats.client.api.PublishAck;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+
+import static com.TicketService.supportTicketService.nats.util.NatsJsUtils.*;
+
 
 @Configuration
 @ComponentScan(basePackages = "com.TicketService")
-public class AppConfig {
+public class AppConfigServer {
 
 	@Bean
 	CommandLineRunner commandLineRunner() {

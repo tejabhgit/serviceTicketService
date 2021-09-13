@@ -21,10 +21,6 @@ import com.example.grpc.server.grpcserver.DeleteTicketResponse;
 import com.example.grpc.server.grpcserver.Device;
 import com.example.grpc.server.grpcserver.TicketServiceGrpc;
 
-
-
-
-
 @Slf4j
 @GrpcService
 public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
@@ -36,9 +32,8 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
 
         try {
-            int id =request.getId();
-            log.info("Id {}", id);
-            Optional<Ticket> ticket = repository.findById(id);
+            log.info("Fetching Ticket by Ticket id : {}", request.getId());
+            Optional<Ticket> ticket = repository.findById(request.getId());
 
             CurrentAgent currentAgent = CurrentAgent.newBuilder().
                     setUserId(ticket.get().getContent().get(0).getCurrentAgent().getUserId()).setFirstName(ticket.get().getContent().get(0).getCurrentAgent().getFirstName()).
@@ -57,12 +52,11 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
                     setIssueClosed(ticket.get().getContent().get(0).getIssueClosed()).setState(ticket.get().getContent().get(0).getState()).
                     setDescription(ticket.get().getContent().get(0).getDescription()).build();
 
-
-
             GetTicketByIdResponse getTicketResponse = GetTicketByIdResponse.newBuilder().setLast(ticket.get().isLast()).setTotalElements(ticket.get().getTotalElements()).setTotalPages(ticket.get().getTotalPages()).
                     setNumberOfElements(ticket.get().getNumber()).setFirst(ticket.get().isFirst()).setNumber(ticket.get().getNumber()).setEmpty(ticket.get().isEmpty()).setContent(content).build();
             responseObserver.onNext(getTicketResponse);
             responseObserver.onCompleted();
+            log.info("Retrieved Ticket id : {}", request.getId());
         }catch(Exception e){
             log.error(e.getMessage());
         }
@@ -116,6 +110,7 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
             AddTicketReponse addTicketReponse = AddTicketReponse.newBuilder().setResponseId(200).build();
             responseObserver.onNext(addTicketReponse);
             responseObserver.onCompleted();
+            log.info("Successfully added a Support Ticket resource {}", request.getId());
 
         }catch(Exception e) {
             log.error(e.getMessage());
@@ -125,12 +120,13 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
     @Override
     public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
-
         try {
+            log.info("Deleting Ticket by Ticket id : {}", request.getId());
             repository.deleteById(request.getId());
             DeleteTicketResponse deleteTicketResponse = DeleteTicketResponse.newBuilder().setResponse("Ticket deleted with id : "+request.getId()).build();
             responseObserver.onNext(deleteTicketResponse);
             responseObserver.onCompleted();
+            log.info("Deleted Ticket id : {}", request.getId());
         }catch(Exception e) {
             log.error(e.getMessage());
         }

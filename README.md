@@ -13,6 +13,11 @@ The following guides illustrate how to use some features concretely:
 * 
 # Getting Started
 
+* docker compose up -d
+* Start the application in debug/run mode
+* docker compose down -v
+* docker logs mongo-database -f
+
 ### Reference Documentation
 
 ###Docker commands:

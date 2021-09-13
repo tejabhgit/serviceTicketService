@@ -2,7 +2,8 @@ package com.TicketService.supportTicketService.nats.server;
 
 import io.nats.client.Options;
 import io.nats.client.impl.Headers;
-import static com.TicketService.supportTicketService.nats.server.ExampleUtils.uniqueEnough;
+
+import static com.TicketService.supportTicketService.nats.server.ExampleUtils.*;
 
 public class ExampleArgs {
 
