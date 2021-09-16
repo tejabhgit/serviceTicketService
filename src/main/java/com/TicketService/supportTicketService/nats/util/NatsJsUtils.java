@@ -1,11 +1,6 @@
 package com.TicketService.supportTicketService.nats.util;
 
-import io.nats.client.Connection;
-import io.nats.client.JetStream;
-import io.nats.client.JetStreamApiException;
-import io.nats.client.JetStreamManagement;
-import io.nats.client.JetStreamSubscription;
-import io.nats.client.Message;
+import io.nats.client.*;
 import io.nats.client.api.ConsumerInfo;
 import io.nats.client.api.StorageType;
 import io.nats.client.api.StreamConfiguration;
@@ -162,7 +157,7 @@ public class NatsJsUtils {
                     .subject(subject)
                     .data(data.getBytes(StandardCharsets.US_ASCII))
                     .build();
-            js.publish(msg);
+            js.publishAsync(msg);
         }
         if (verbose) {
             System.out.println(" <-");
