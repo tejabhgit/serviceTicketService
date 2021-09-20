@@ -1,9 +1,11 @@
 package com.TicketService.supportTicketService.repository;
 
-import org.springframework.data.mongodb.repository.MongoRepository;
 import com.TicketService.supportTicketService.model.Ticket;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
-public interface TicketRepository extends MongoRepository<Ticket, String>{
+import java.util.UUID;
+
+public interface TicketRepository extends PagingAndSortingRepository<Ticket, UUID> {
 
 
 }

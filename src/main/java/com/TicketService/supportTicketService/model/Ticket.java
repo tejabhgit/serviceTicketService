@@ -3,6 +3,10 @@ package com.TicketService.supportTicketService.model;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.mongodb.core.index.IndexDirection;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,13 +19,8 @@ import lombok.Data;
 public class Ticket {
 
 	@Id
-	private String id;
-	private boolean last;
-	private int totalElements;
-	private int totalPages;
-	private int numberOfElements;
-	private boolean first;
-	private int number;
-	private boolean empty;	
-	private List<Content> content;
+	private UUID id;
+
+	@Indexed(name = "ticketResponses_index", direction = IndexDirection.ASCENDING)
+	private List<TicketContent> ticketContents;
 }

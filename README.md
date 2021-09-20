@@ -40,8 +40,11 @@ if error check docker ps -a # and stop container by "docker container prune" and
 ###useful docker commands
 * docker ps -a
 * docker stop jshdbjshdbv
-####remove all containers:
-*  docker container prune
 
-####remove all images from power shell:
+
+####remove all containers and images from power shell:
+* docker stop $(docker ps -q)
+* docker container prune
 * docker rmi $(docker images -q)
+####prometheus metrics
+* http://localhost:8080/actuator/prometheus

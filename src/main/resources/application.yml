@@ -1,3 +1,17 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    health:
+      show-details: always
+  metrics:
+    export:
+      atlas:
+        enabled: false
+  security:
+    enabled: false
+
 spring:
   application:
     name: svc-rps-support-ticket
@@ -5,6 +19,7 @@ spring:
     mongo-database:
       host: localhost
       port: 27017
+      auto-index-creation: true
 
 logging:
   level:
