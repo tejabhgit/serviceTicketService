@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package rps.types.request.v1;
+
+option csharp_namespace = "Rps.Types.Request.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/types/request/v1;requestv1";
+option java_multiple_files = true;
+option java_outer_classname = "GetProto";
+option java_package = "com.rps.types.request.v1";
+option objc_class_prefix = "RTR";
+option php_namespace = "Rps\\Types\\Request\\V1";
+
+// Generic get params inplemented by all CRUD style get methods.
+message Get {
+  // List of fields to populate from the resource in the result.
+  // // Defaults to empty, If empty all fields will be populated.
+  // ID is always populated
+  repeated string field_mask = 1;
+}

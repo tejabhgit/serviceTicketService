@@ -1,0 +1,3 @@
+[submodule "api-rps-proto"]
+	path = api-rps-proto
+	url = https://github.azc.ext.hp.com/hp-rps/api-rps-proto.git

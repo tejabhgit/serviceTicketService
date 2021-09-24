@@ -20,6 +20,25 @@ spring:
       host: localhost
       port: 27017
       auto-index-creation: true
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: dataIn
+          binder: nats1
+        output:
+          destination: dataOut
+          binder: nats1
+      binders:
+        nats1:
+          type: nats
+          environment:
+            nats:
+              spring:
+                cloud:
+                  stream:
+                    binder:
+                      server: nats://localhost:4222
 
 logging:
   level:
@@ -29,6 +48,3 @@ logging:
     console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
     file: "%d %p %c{1.} [%t] %m%n"
   file: app.log
-  
-  
-  

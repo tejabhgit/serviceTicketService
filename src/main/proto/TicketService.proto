@@ -8,29 +8,29 @@ message GetTicketByIdRequest {
 
 }
 
-message CurrentAgent{
+message CurrentAgentGrpc {
   string userId = 1;
   string firstName = 2;
   string lastName = 3;
   string gravatar = 4;
 }
 
-message Category {
+message CategoryGrpc {
   string name = 1;
   string description = 2;
 }
 
-message Device {
+message DeviceGrpc {
   string deviceId = 1;
   string hostname = 2;
   string state = 3;
   string os = 4;
 }
 
-message TicketContent {
-  CurrentAgent currentAgent = 1;
-  Category Category = 2;
-  Device device = 3;
+message TicketContentGrpc {
+  CurrentAgentGrpc currentAgent = 1;
+  CategoryGrpc Category = 2;
+  DeviceGrpc device = 3;
   string id = 4;
   int32 issueOpened = 5;
   int32 issueClosed = 6;
@@ -38,7 +38,7 @@ message TicketContent {
   string description = 8;
 }
 
-message Pageable {
+message PageableGrpc {
   bool last = 1;
   int64 totalElements = 2;
   int64 totalPages = 3;
@@ -50,7 +50,7 @@ message Pageable {
 
 message GetTicketByIdResponse {
   string id = 1;
-  TicketContent ticketContent = 2;
+  TicketContentGrpc ticketContentGrpc = 2;
 }
 
 message AddTicketRequest {
@@ -79,8 +79,8 @@ message FindAllTicketsRequest {
 }
 
 message FindAllTicketsResponse {
-  TicketContent ticketContent = 1;
-  Pageable pageable = 2;
+  TicketContentGrpc ticketContentGrpc = 1;
+  PageableGrpc pageableGrpc = 2;
 }
 
 service TicketService {
