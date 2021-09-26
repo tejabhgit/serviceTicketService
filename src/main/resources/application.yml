@@ -22,13 +22,17 @@ spring:
       auto-index-creation: true
   cloud:
     stream:
+      source: notificationEventSupplier
       bindings:
-        input:
-          destination: dataIn
+        notificationEventSupplier-out-0:
+          destination: notification-events
           binder: nats1
-        output:
-          destination: dataOut
-          binder: nats1
+##        input:
+##          destination: dataIn
+##          binder: nats1
+##        output:
+##          destination: dataOut
+##          binder: nats1
       binders:
         nats1:
           type: nats

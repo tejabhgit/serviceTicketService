@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.xml.transform.Source;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,18 +23,21 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.support.ticket.service.model.Ticket;
+import org.springframework.messaging.support.MessageBuilder;
 
-
+//@EnableBinding(Source.class)
 @RestController
 public class TicketServiceController {
 	
 	private TicketRepository ticketRepository;
 	private UpperCaseTransformer upperCaseTransformer;
+	private StreamBridge streamBridge; 
 
 	@Autowired
-	public TicketServiceController (TicketRepository ticketRepository, UpperCaseTransformer upperCaseTransformer){
+	public TicketServiceController (TicketRepository ticketRepository, UpperCaseTransformer upperCaseTransformer,StreamBridge streamBridge){
 		this.ticketRepository = ticketRepository;
 		this.upperCaseTransformer = upperCaseTransformer;
+		this.streamBridge= streamBridge;
 	}
 
 	@PostMapping("/addTicket")
@@ -69,8 +75,10 @@ public class TicketServiceController {
 	}
 
 	@PostMapping("/publish")
-	public MessageResource publish(@RequestBody MessageResource messageResource){
-		upperCaseTransformer.transform(messageResource);
+	public MessageResource publish(){
+		MessageResource messageResource = new MessageResource();
+		messageResource.setName("RPS_TICKET");
+		 streamBridge.send("notificationEventSupplier-out-0", MessageBuilder.withPayload(messageResource.getName()).build());
 		return messageResource;
 	}
 
