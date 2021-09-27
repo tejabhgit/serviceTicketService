@@ -32,10 +32,14 @@ message TicketContentGrpc {
   CategoryGrpc Category = 2;
   DeviceGrpc device = 3;
   string id = 4;
-  int32 issueOpened = 5;
-  int32 issueClosed = 6;
+  string issueOpened = 5;
+  string issueClosed = 6;
   string state = 7;
   string description = 8;
+  MetaInfoGrpc metainfo = 9;
+  string supportTicketId = 10;
+  string openTraceId = 11;
+  string spanId = 12;
 }
 
 message PageableGrpc {
@@ -83,12 +87,18 @@ message FindAllTicketsResponse {
   PageableGrpc pageableGrpc = 2;
 }
 
+message MetaInfoGrpc {
+   string version = 1;
+   string createdDate = 2;
+   string UpdatedDate = 3;
+   string deletedDate = 4;
+}
+
 service TicketService {
   rpc findAllTickets(FindAllTicketsRequest) returns (stream FindAllTicketsResponse);
   rpc getTicketById(GetTicketByIdRequest) returns (GetTicketByIdResponse);
   rpc addTicket(AddTicketRequest) returns (AddTicketResponse);
   rpc deleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
 
-  //submodule from git
-  //get from rps-api-proto
+  //submodule
 }
