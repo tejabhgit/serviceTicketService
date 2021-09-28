@@ -1,4 +1,4 @@
-package com.hp.supportticket.errors.server;
+/*package com.hp.supportticket.errors.server;
 
 import com.example.grpc.error.EchoRequest;
 import com.example.grpc.error.EchoResponse;
@@ -71,3 +71,4 @@ public class ErrorServiceImpl extends ErrorServiceGrpc.ErrorServiceImplBase {
     });
   }
 }
+*/

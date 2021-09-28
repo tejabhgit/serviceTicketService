@@ -1,5 +1,9 @@
 package com.hp.supportticket.services;
 
+import com.hp.supportticket.errors.server.PagedResultNotFoundException;
+import com.hp.supportticket.errors.server.RecordNotFoundException;
+import com.hp.supportticket.errors.server.SVCRPSSupportTicketBuisnessException;
+import com.hp.supportticket.errors.server.ValidationException;
 import com.hp.supportticket.model.Category;
 import com.hp.supportticket.model.CurrentAgent;
 import com.hp.supportticket.model.Device;
@@ -45,236 +49,229 @@ import util.CommonUtil;
 @GrpcService
 public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
+	private TicketRepository repository;
+	private CurrentAgentService currentAgentService;
+	private DeviceService deviceService;
 
-    private TicketRepository repository;
-    private CurrentAgentService currentAgentService;
-    private DeviceService deviceService;
+	@Autowired
+	public void TicketService(TicketRepository repository, CurrentAgentService currentAgentService,
+			DeviceService deviceService) {
+		this.repository = repository;
+		this.currentAgentService = currentAgentService;
+		this.deviceService = deviceService;
+	}
 
-    @Autowired
-    public void TicketService(TicketRepository repository,
-                              CurrentAgentService currentAgentService,
-                                DeviceService deviceService){
-        this.repository = repository;
-        this.currentAgentService = currentAgentService;
-        this.deviceService= deviceService;
-    }
+	@Override
+	@Timed
+	public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
+		Page<Ticket> pagedResult = null;
+		try {
+			// validations
+			if (!TicketServiceValidator.validateFindAllRequest(request)) {
+				throw new ValidationException("validateFindAllRequest falied as Request couldn't be validated");
+			}
 
-    @Override
-    @Timed
-    public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
-        Page<Ticket> pagedResult = null;
-        try {
-            //validations
-            if (!TicketServiceValidator.validateFindAllRequest(request)){
-                return;
-                //error handling
-            };
+			Pageable paging = PageRequest.of(request.getPage(), request.getSize(), Sort.by(request.getSortBy()));
 
-            Pageable paging = PageRequest.of(request.getPage(), request.getSize(), Sort.by(request.getSortBy()));
+			pagedResult = Objects.nonNull(paging) ? repository.findAll(paging) : repository.findAll(Pageable.unpaged());
 
-            pagedResult = Objects.nonNull(paging) ? repository.findAll(paging) : repository.findAll(Pageable.unpaged());
+			PageableGrpc pageableGrpc = PageableGrpc.newBuilder().setLast(pagedResult.isLast())
+					.setTotalElements(pagedResult.getTotalElements()).setTotalPages(pagedResult.getTotalPages())
+					.setNumberOfElements(pagedResult.getNumberOfElements()).setFirst(pagedResult.isFirst())
+					.setNumber(pagedResult.getNumber()).setEmpty(pagedResult.isEmpty()).build();
+			FindAllTicketsResponse findAllTicketsResponse = FindAllTicketsResponse.newBuilder()
+					.setPageableGrpc(pageableGrpc).build();
+			responseObserver.onNext(findAllTicketsResponse);
 
-            PageableGrpc pageableGrpc = PageableGrpc.newBuilder()
-                    .setLast(pagedResult.isLast())
-                    .setTotalElements(pagedResult.getTotalElements())
-                    .setTotalPages(pagedResult.getTotalPages())
-                    .setNumberOfElements(pagedResult.getNumberOfElements())
-                    .setFirst(pagedResult.isFirst())
-                    .setNumber(pagedResult.getNumber())
-                    .setEmpty(pagedResult.isEmpty()).build();
-            FindAllTicketsResponse findAllTicketsResponse = FindAllTicketsResponse.newBuilder().setPageableGrpc(pageableGrpc).build();
-            responseObserver.onNext(findAllTicketsResponse);
+			List<TicketContentGrpc> listTicketResponse = new ArrayList<TicketContentGrpc>();
 
-            List<TicketContentGrpc> listTicketResponse = new ArrayList<TicketContentGrpc>();
+			if (pagedResult.hasContent()) {
+				List<Ticket> listTicketPage = pagedResult.getContent();
 
-            if (pagedResult.hasContent()) {
-                List<Ticket> listTicketPage = pagedResult.getContent();
+				listTicketPage.stream().filter(Objects::nonNull)
+						.filter(ticketPage -> ticketPage.getTicketContents() != null).forEach(ticketPage -> {
 
-                listTicketPage.stream().filter(Objects::nonNull)
-                        .filter(ticketPage -> ticketPage.getTicketContents() != null)
-                        .forEach(ticketPage -> {
+							CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
+									.setUserId(ticketPage.getTicketContents().get(0).getCurrentAgent().getUserId())
+									.setFirstName(
+											ticketPage.getTicketContents().get(0).getCurrentAgent().getFirstName())
+									.setLastName(ticketPage.getTicketContents().get(0).getCurrentAgent().getLastName())
+									.setGravatar(ticketPage.getTicketContents().get(0).getCurrentAgent().getGravatar())
+									.build();
 
-                    CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
-                            .setUserId(ticketPage.getTicketContents().get(0).getCurrentAgent().getUserId())
-                            .setFirstName(ticketPage.getTicketContents().get(0).getCurrentAgent().getFirstName())
-                            .setLastName(ticketPage.getTicketContents().get(0).getCurrentAgent().getLastName())
-                            .setGravatar(ticketPage.getTicketContents().get(0).getCurrentAgent().getGravatar())
-                            .build();
+							CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
+									.setName(ticketPage.getTicketContents().get(0).getCategory().getName())
+									.setDescription(
+											ticketPage.getTicketContents().get(0).getCategory().getDescription())
+									.build();
 
-                    CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
-                            .setName(ticketPage.getTicketContents().get(0).getCategory().getName())
-                            .setDescription(ticketPage.getTicketContents().get(0).getCategory().getDescription())
-                            .build();
+							DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
+									.setDeviceId(ticketPage.getTicketContents().get(0).getDevice().getDeviceId())
+									.setHostname(ticketPage.getTicketContents().get(0).getDevice().getHostname())
+									.setState(ticketPage.getTicketContents().get(0).getDevice().getState())
+									.setOs(ticketPage.getTicketContents().get(0).getDevice().getOs()).build();
 
-                    DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
-                            .setDeviceId(ticketPage.getTicketContents().get(0).getDevice().getDeviceId())
-                            .setHostname(ticketPage.getTicketContents().get(0).getDevice().getHostname())
-                            .setState(ticketPage.getTicketContents().get(0).getDevice().getState())
-                            .setOs(ticketPage.getTicketContents().get(0).getDevice().getOs())
-                            .build();
+							TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
+									.setId(ticketPage.getTicketContents().get(0).getId())
+									.setCurrentAgent(currentAgentGrpc).setCategory(categoryGrpc).setDevice(deviceGrpc)
+									.setIssueOpened(ticketPage.getTicketContents().get(0).getIssueOpened())
+									.setIssueClosed(ticketPage.getTicketContents().get(0).getIssueClosed())
+									.setState(ticketPage.getTicketContents().get(0).getState())
+									.setDescription(ticketPage.getTicketContents().get(0).getDescription()).build();
+							listTicketResponse.add(ticketResponseGrpc);
+						});
+			} else {
+				throw new PagedResultNotFoundException("PagedResult Not Found for");
+			}
+			listTicketResponse.stream().filter(listTicketRes -> listTicketRes.hasDevice()).forEach(listTicketRes -> {
+				responseObserver
+						.onNext(FindAllTicketsResponse.newBuilder().setTicketContentGrpc(listTicketRes).build());
+			});
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			throw new SVCRPSSupportTicketBuisnessException("603", "Something went Wrong " + e.getMessage());
+		}
+	}
 
-                    TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
-                            .setId(ticketPage.getTicketContents().get(0).getId())
-                            .setCurrentAgent(currentAgentGrpc)
-                            .setCategory(categoryGrpc)
-                            .setDevice(deviceGrpc)
-                            .setIssueOpened(ticketPage.getTicketContents().get(0).getIssueOpened())
-                            .setIssueClosed(ticketPage.getTicketContents().get(0).getIssueClosed())
-                            .setState(ticketPage.getTicketContents().get(0).getState())
-                            .setDescription(ticketPage.getTicketContents().get(0).getDescription()).build();
-                    listTicketResponse.add(ticketResponseGrpc);
-                });
-            }
-            listTicketResponse.stream().filter(listTicketRes -> listTicketRes.hasDevice())
-                    .forEach(listTicketRes -> {
-                        responseObserver.onNext(FindAllTicketsResponse
-                                .newBuilder().setTicketContentGrpc(listTicketRes).build());
-                    });
-            responseObserver.onCompleted();
-            log.info("Found all tickets of size: {}",listTicketResponse.size() );
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
+	@Override
+	@Timed
+	public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
 
-    @Override
-    @Timed
-    public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
+		try {
+			// validations
+			if (!TicketServiceValidator.validateGetRequest(request)) {
+				throw new ValidationException("validateFindAllRequest falied as Request couldn't be validated");
+			}
+			;
 
-        try {
-            //validations
-            if (!TicketServiceValidator.validateGetRequest(request)){
-                return;
-                //error handling
-            };
+			UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
+			// log.info("Fetching Ticket by Ticket id : {}", uuid);
+			Optional<Ticket> ticket = repository.findById(uuid);
+			if (ticket.isPresent()) {
+				CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
+						.setUserId(ticket.get().getTicketContents().get(0).getCurrentAgent().getUserId())
+						.setFirstName(ticket.get().getTicketContents().get(0).getCurrentAgent().getFirstName())
+						.setLastName(ticket.get().getTicketContents().get(0).getCurrentAgent().getLastName())
+						.setGravatar(ticket.get().getTicketContents().get(0).getCurrentAgent().getGravatar()).build();
 
-            UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
-            log.info("Fetching Ticket by Ticket id : {}", uuid);
-            Optional<Ticket> ticket = repository.findById(uuid);
+				CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
+						.setName(ticket.get().getTicketContents().get(0).getCategory().getName())
+						.setDescription(ticket.get().getTicketContents().get(0).getCategory().getDescription()).build();
 
-            CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
-                    .setUserId(ticket.get().getTicketContents().get(0).getCurrentAgent().getUserId())
-                    .setFirstName(ticket.get().getTicketContents().get(0).getCurrentAgent().getFirstName())
-                    .setLastName(ticket.get().getTicketContents().get(0).getCurrentAgent().getLastName())
-                    .setGravatar(ticket.get().getTicketContents().get(0).getCurrentAgent().getGravatar())
-                    .build();
+				DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
+						.setDeviceId(ticket.get().getTicketContents().get(0).getDevice().getDeviceId())
+						.setHostname(ticket.get().getTicketContents().get(0).getDevice().getHostname())
+						.setState(ticket.get().getTicketContents().get(0).getDevice().getState())
+						.setOs(ticket.get().getTicketContents().get(0).getDevice().getOs()).build();
 
-            CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
-                    .setName(ticket.get().getTicketContents().get(0).getCategory().getName())
-                    .setDescription(ticket.get().getTicketContents().get(0).getCategory().getDescription())
-                    .build();
+				TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
+						.setId(ticket.get().getTicketContents().get(0).getId()).setCurrentAgent(currentAgentGrpc)
+						.setCategory(categoryGrpc).setDevice(deviceGrpc)
+						.setIssueOpened(ticket.get().getTicketContents().get(0).getIssueOpened())
+						.setIssueClosed(ticket.get().getTicketContents().get(0).getIssueClosed())
+						.setState(ticket.get().getTicketContents().get(0).getState())
+						.setDescription(ticket.get().getTicketContents().get(0).getDescription()).build();
 
-            DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
-                    .setDeviceId(ticket.get().getTicketContents().get(0).getDevice().getDeviceId())
-                    .setHostname(ticket.get().getTicketContents().get(0).getDevice().getHostname())
-                    .setState(ticket.get().getTicketContents().get(0).getDevice().getState())
-                    .setOs(ticket.get().getTicketContents().get(0).getDevice().getOs())
-                    .build();
+				GetTicketByIdResponse getTicketResponse = GetTicketByIdResponse.newBuilder()
+						.setTicketContentGrpc(ticketResponseGrpc).build();
+				responseObserver.onNext(getTicketResponse);
+				responseObserver.onCompleted();
+				// log.info("Retrieved Ticket id : {}", uuid);
+			} else {
+				throw new RecordNotFoundException("Record Not Found Exception for the Request");
+			}
+		} catch (Exception e) {
+			throw new SVCRPSSupportTicketBuisnessException("603", "Something went Wrong " + e.getMessage());
+		}
+	}
 
-            TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
-                    .setId(ticket.get().getTicketContents().get(0).getId())
-                    .setCurrentAgent(currentAgentGrpc)
-                    .setCategory(categoryGrpc)
-                    .setDevice(deviceGrpc).setIssueOpened(ticket.get().getTicketContents().get(0).getIssueOpened())
-                    .setIssueClosed(ticket.get().getTicketContents().get(0).getIssueClosed())
-                    .setState(ticket.get().getTicketContents().get(0).getState())
-                    .setDescription(ticket.get().getTicketContents().get(0).getDescription()).build();
+	@Override
+	@Timed(value = "addTicket", histogram = true, percentiles = { 0.95, 0.99 }, extraTags = { "version", "1.0" })
+	public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
 
-            GetTicketByIdResponse getTicketResponse = GetTicketByIdResponse.newBuilder().setTicketContentGrpc(ticketResponseGrpc).build();
-            responseObserver.onNext(getTicketResponse);
-            responseObserver.onCompleted();
-            log.info("Retrieved Ticket id : {}", uuid);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
+		try {
+			// log.info("Creating a Support Ticket resource {}", request.getDeviceId());
+			Ticket ticket = new Ticket();
+			String ticketId = CommonUtil.uniqueString();
+			ticket.setId(StringUtils.isNotBlank(ticketId) ? UUID.fromString(CommonUtil.uniqueString()) : null);
+			ticket.setSupportTicketId(CommonUtil.generateIncrementalNumber());
 
-    @Override
-    @Timed (value = "addTicket",
-            histogram = true,
-            percentiles = {0.95, 0.99},
-            extraTags = {"version", "1.0"}
-    )
-    public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
+			// validations
+			TicketServiceValidator.validateAddRequest(request);
+			TicketServiceValidator.validateTicketIds(ticket);
 
-        try {
-            log.info("Creating a Support Ticket resource {}", request.getDeviceId());
-            Ticket ticket = new Ticket();
-            String ticketId = CommonUtil.uniqueString();
-            ticket.setId(StringUtils.isNotBlank(ticketId) ? UUID.fromString(CommonUtil.uniqueString()) : null);
-            ticket.setSupportTicketId(CommonUtil.generateIncrementalNumber());
+			MetaInfo metaInfo = new MetaInfo();
+			metaInfo.setVersion("v1");
+			metaInfo.setCreatedDate(CommonUtil.generateSystemDate());
+			metaInfo.setUpdatedDate(null);
+			metaInfo.setDeletedDate(null);
+			ticket.setMetaInfo(metaInfo);
 
+			// service to fetch Current Agent
+			CurrentAgent currentAgent = currentAgentService.getCurrentAgent(request);
 
-            //validations
-            TicketServiceValidator.validateAddRequest(request);
-            TicketServiceValidator.validateTicketIds(ticket);
+			// service to fetch Device Agent
+			Device device = deviceService.getDevice(request);
 
-            MetaInfo metaInfo = new MetaInfo();
-            metaInfo.setVersion("v1");
-            metaInfo.setCreatedDate(CommonUtil.generateSystemDate());
-            metaInfo.setUpdatedDate(null);
-            metaInfo.setDeletedDate(null);
-            ticket.setMetaInfo(metaInfo);
+			Category category = new Category();
+			category.setDescription(request.getDescription());
+			category.setName(request.getCategory());
 
-            //service to fetch Current Agent
-            CurrentAgent currentAgent = currentAgentService.getCurrentAgent(request);
+			TicketContent ticketContent = new TicketContent();
+			ticketContent.setId(ticketId); // generated ticket id
+			ticketContent.setCurrentAgent(currentAgent);
+			ticketContent.setCategory(category);
+			ticketContent.setDevice(device);
+			ticketContent.setIssueOpened(CommonUtil.generateSystemDate());
+			ticketContent.setIssueClosed(null);
+			ticketContent.setState("Active");
+			ticketContent.setDescription("Ticket Support is being worked");
 
-            //service to fetch Device Agent
-            Device device = deviceService.getDevice(request);
+			// create metadata
 
-            Category category = new Category();
-            category.setDescription(request.getDescription());
-            category.setName(request.getCategory());
+			List<TicketContent> ticketResponseList = new ArrayList<>();
+			ticketResponseList.add(ticketContent);
+			ticket.setTicketContents(ticketResponseList);
+			repository.save(ticket);
+			AddTicketResponse addTicketReponse = AddTicketResponse.newBuilder().setResponseId(201).build();
+			responseObserver.onNext(addTicketReponse);
+			responseObserver.onCompleted();
 
-            TicketContent ticketContent = new TicketContent();
-            ticketContent.setId(ticketId); //generated ticket id
-            ticketContent.setCurrentAgent(currentAgent);
-            ticketContent.setCategory(category);
-            ticketContent.setDevice(device);
-            ticketContent.setIssueOpened(CommonUtil.generateSystemDate());
-            ticketContent.setIssueClosed(null);
-            ticketContent.setState("Active");
-            ticketContent.setDescription("Ticket Support is being worked");
+		} catch (IllegalArgumentException e) {
+			throw new SVCRPSSupportTicketBuisnessException("602", "Given Ticket is Null " + e.getMessage());
+		} catch (Exception e) {
+			throw new SVCRPSSupportTicketBuisnessException("603", "Something went Wrong " + e.getMessage());
+		}
+	}
 
-            //create metadata
-
-            List<TicketContent> ticketResponseList = new ArrayList<>();
-            ticketResponseList.add(ticketContent);
-            ticket.setTicketContents(ticketResponseList);
-            repository.save(ticket);
-            AddTicketResponse addTicketReponse = AddTicketResponse.newBuilder().setResponseId(201).build();
-            responseObserver.onNext(addTicketReponse);
-            responseObserver.onCompleted();
-            log.info("Successfully added a Support Ticket resource {}", request.getDeviceId());
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    @Override
-    @Timed
-    public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
-        try {
-            //validations
-            if (!TicketServiceValidator.validateDeleteRequest(request)){
-                Status status = Status.FAILED_PRECONDITION.withDescription("Delete Service failed");
-                responseObserver.onError(status.asRuntimeException());
-                return;
-            }
-            UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
-            log.info("Deleting Ticket by Ticket id : {}", uuid);
-            repository.deleteById(uuid);
-            DeleteTicketResponse deleteTicketResponse = DeleteTicketResponse.newBuilder().setResponse("Ticket deleted with id : " + uuid)
-                    .build();
-            responseObserver.onNext(deleteTicketResponse);
-            responseObserver.onCompleted();
-            log.info("Deleted Ticket id : {}", uuid);
-        } catch (Exception e) {
-                Status status = Status.fromThrowable(e);
-            log.error("Delete Ticket Exception occurred for"+ status.getCode() + " : " + status.getDescription());
-        }
-    }
+	@Override
+	@Timed
+	public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
+		try {
+			// validations
+			if (!TicketServiceValidator.validateDeleteRequest(request)) {
+				// Status status = Status.FAILED_PRECONDITION.withDescription("Delete Service
+				// failed");
+				// responseObserver.onError(status.asRuntimeException());
+				// return;
+				throw new ValidationException("validateFindAllRequest falied as Request couldn't be validated");
+			}
+			UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
+			// log.info("Deleting Ticket by Ticket id : {}", uuid);
+			if (request.getId() != null) {
+				repository.deleteById(uuid);
+				DeleteTicketResponse deleteTicketResponse = DeleteTicketResponse.newBuilder()
+						.setResponse("Ticket deleted with id : " + uuid).build();
+				responseObserver.onNext(deleteTicketResponse);
+				responseObserver.onCompleted();
+			} else {
+				throw new RecordNotFoundException("Record Not Found Exception for the Request");
+			}
+			// log.info("Deleted Ticket id : {}", uuid);
+		} catch (Exception e) {
+			Status status = Status.fromThrowable(e);
+			throw new SVCRPSSupportTicketBuisnessException("603", "Something went Wrong " + e.getMessage());
+		}
+	}
 
 }
-

@@ -1,4 +1,4 @@
-package com.hp.supportticket.errors.server;
+/*package com.hp.supportticket.errors.server;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -22,3 +22,4 @@ public class ErrorGrpcServer {
     server.awaitTermination();
   }
 }
+*/
