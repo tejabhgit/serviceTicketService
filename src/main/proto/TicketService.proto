@@ -36,7 +36,7 @@ message TicketContentGrpc {
   string issueClosed = 6;
   string state = 7;
   string description = 8;
-  MetaInfoGrpc metainfo = 9;
+  MetaInfoGrpc metaInfo = 9;
   string supportTicketId = 10;
   string openTraceId = 11;
   string spanId = 12;
@@ -54,7 +54,7 @@ message PageableGrpc {
 
 message GetTicketByIdResponse {
   string id = 1;
-  TicketContentGrpc ticketContentGrpc = 2;
+  TicketContentGrpc ticket = 2;
 }
 
 message AddTicketRequest {
@@ -83,7 +83,7 @@ message FindAllTicketsRequest {
 }
 
 message FindAllTicketsResponse {
-  TicketContentGrpc ticketContentGrpc = 1;
+  TicketContentGrpc ticket = 1;
   PageableGrpc pageableGrpc = 2;
 }
 
@@ -99,6 +99,4 @@ service TicketService {
   rpc getTicketById(GetTicketByIdRequest) returns (GetTicketByIdResponse);
   rpc addTicket(AddTicketRequest) returns (AddTicketResponse);
   rpc deleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
-
-  //submodule
 }

@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   mongo-database:
@@ -7,9 +7,8 @@ services:
     ports:
       - 27017-27019:27017-27019
 
-  nats:
-   image: nats:latest
-   ports:
-     - 4222:4222
-   command:
-     - -js
+  broker:
+    image: nats:latest
+    ports:
+      - 4222:4222
+    command: ["-js"]

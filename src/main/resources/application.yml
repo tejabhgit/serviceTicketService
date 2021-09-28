@@ -11,7 +11,6 @@ management:
         enabled: false
   security:
     enabled: false
-
 spring:
   application:
     name: svc-rps-support-ticket
@@ -21,22 +20,31 @@ spring:
       port: 27017
       auto-index-creation: true
   cloud:
+    function:
+      definition: stringSupplier;toUpperCase;stringLogger
     stream:
+      poller:
+        fixed-delay: 10000
       bindings:
-        notificationEventSupplier-out-0:
-          destination: notification-events
-          binder: nats1
-      source: notificationEventSupplier
-      binders:
-        nats1:
-          type: nats
-          environment:
-            nats:
-              spring:
-                cloud:
-                  stream:
-                    binder:
-                      server: nats://localhost:4222
+        stringSupplier-out-0:
+          destination: strings-topic
+          binder: nats
+        toUpperCase-in-0:
+          destination: strings-topic
+          binder: nats
+        stringLogger-in-0:
+          destination: logger-topic
+          binder: nats
+        toUpperCase-out-0:
+          destination: logger-topic
+          binder: nats
+
+nats:
+  spring:
+    server: nats://localhost:4222
+
+server:
+  port: 9192
 
 logging:
   level:
