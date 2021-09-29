@@ -15,7 +15,9 @@ import com.example.grpc.server.grpcserver.MetaInfoGrpc;
 import com.example.grpc.server.grpcserver.PageableGrpc;
 import com.example.grpc.server.grpcserver.TicketContentGrpc;
 import com.example.grpc.server.grpcserver.TicketServiceGrpc;
+import com.hp.rps.svc.supportticket.errorhandling.custom.PagedResultNotFoundException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.SVCRPSSupportTicketBusinessException;
+import com.hp.rps.svc.supportticket.errorhandling.custom.ValidationException;
 import com.hp.rps.svc.supportticket.model.Category;
 import com.hp.rps.svc.supportticket.model.CurrentAgent;
 import com.hp.rps.svc.supportticket.model.Device;
@@ -24,6 +26,7 @@ import com.hp.rps.svc.supportticket.model.Ticket;
 import com.hp.rps.svc.supportticket.model.TicketContent;
 import com.hp.rps.svc.supportticket.repository.TicketRepository;
 import com.hp.rps.svc.supportticket.util.CommonUtil;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.annotation.Timed;
@@ -36,11 +39,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import javax.validation.constraints.Null;
+import java.util.*;
 
 @Slf4j
 @GrpcService
@@ -65,9 +65,10 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
         Page<Ticket> pagedResult = null;
         try {
+
             //validations
             if (!TicketServiceValidator.validateFindAllRequest(request)) {
-                return;
+                throw new SVCRPSSupportTicketBusinessException("validateFindAllRequest falied as Request couldn't be validated");
                 //error handling
             }
             ;
@@ -146,7 +147,12 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
             responseObserver.onCompleted();
             log.info("Found all tickets of size: {}", listTicketResponse.size());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    // Here is our custom exception information
+                          //  .augmentDescription().
+                   // .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
         }
     }
 
@@ -156,66 +162,91 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
         try {
             //validations
-            if (!TicketServiceValidator.validateGetRequest(request)) {
-                throw new SVCRPSSupportTicketBusinessException("validateFindAllRequest falied as Request couldn't be validated");
-            }
-            ;
 
+            List<Exception> errors = new ArrayList<Exception>();
+            if (!TicketServiceValidator.validateGetRequest(request)) {
+                throw new ValidationException("validateFindAllRequest falied as Request couldn't be validated");
+            }
             UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
             log.info("Fetching Ticket by Ticket id : {}", uuid);
             Optional<Ticket> ticket = repository.findById(uuid);
+           if(ticket.isPresent()) {
+               CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
+                       .setUserId(ticket.get().getTicket().getCurrentAgent().getUserId())
+                       .setFirstName(ticket.get().getTicket().getCurrentAgent().getFirstName())
+                       .setLastName(ticket.get().getTicket().getCurrentAgent().getLastName())
+                       .setGravatar(ticket.get().getTicket().getCurrentAgent().getGravatar())
+                       .build();
 
-            CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
-                    .setUserId(ticket.get().getTicket().getCurrentAgent().getUserId())
-                    .setFirstName(ticket.get().getTicket().getCurrentAgent().getFirstName())
-                    .setLastName(ticket.get().getTicket().getCurrentAgent().getLastName())
-                    .setGravatar(ticket.get().getTicket().getCurrentAgent().getGravatar())
-                    .build();
+               CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
+                       .setName(ticket.get().getTicket().getCategory().getName())
+                       .setDescription(ticket.get().getTicket().getCategory().getDescription())
+                       .build();
 
-            CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
-                    .setName(ticket.get().getTicket().getCategory().getName())
-                    .setDescription(ticket.get().getTicket().getCategory().getDescription())
-                    .build();
-
-            DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
-                    .setDeviceId(ticket.get().getTicket().getDevice().getDeviceId())
-                    .setHostname(ticket.get().getTicket().getDevice().getHostname())
-                    .setState(ticket.get().getTicket().getDevice().getState())
-                    .setOs(ticket.get().getTicket().getDevice().getOs())
-                    .build();
+               DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
+                       .setDeviceId(ticket.get().getTicket().getDevice().getDeviceId())
+                       .setHostname(ticket.get().getTicket().getDevice().getHostname())
+                       .setState(ticket.get().getTicket().getDevice().getState())
+                       .setOs(ticket.get().getTicket().getDevice().getOs())
+                       .build();
 
 
-            MetaInfoGrpc metaInfoGrpc = MetaInfoGrpc.newBuilder()
-                    .setCreatedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getCreatedDate()) ? ticket.get().getMetaInfo().getCreatedDate() : " ")
-                    .setUpdatedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getUpdatedDate()) ? ticket.get().getMetaInfo().getUpdatedDate() : " ")
-                    .setDeletedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getDeletedDate()) ? ticket.get().getMetaInfo().getDeletedDate() : " ")
-                    .setVersion(StringUtils.isNotBlank(ticket.get().getMetaInfo().getVersion()) ? ticket.get().getMetaInfo().getVersion() : " ")
-                    .build();
+               MetaInfoGrpc metaInfoGrpc = MetaInfoGrpc.newBuilder()
+                       .setCreatedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getCreatedDate()) ? ticket.get().getMetaInfo().getCreatedDate() : " ")
+                       .setUpdatedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getUpdatedDate()) ? ticket.get().getMetaInfo().getUpdatedDate() : " ")
+                       .setDeletedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getDeletedDate()) ? ticket.get().getMetaInfo().getDeletedDate() : " ")
+                       .setVersion(StringUtils.isNotBlank(ticket.get().getMetaInfo().getVersion()) ? ticket.get().getMetaInfo().getVersion() : " ")
+                       .build();
 
-            TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
-                    .setId(ticket.get().getTicket().getId())
-                    .setCurrentAgent(currentAgentGrpc)
-                    .setCategory(categoryGrpc)
-                    .setDevice(deviceGrpc)
-                    .setIssueOpened(StringUtils.isNotBlank(ticket.get().getTicket().getIssueOpened()) ? ticket.get().getTicket().getIssueOpened() : " ")
-                    .setIssueClosed(StringUtils.isNotBlank(ticket.get().getTicket().getIssueClosed()) ? ticket.get().getTicket().getIssueClosed() : " ")
-                    .setState(ticket.get().getTicket().getState())
-                    .setDescription(ticket.get().getTicket().getDescription())
-                    .setMetaInfo(metaInfoGrpc)
-                    .setSupportTicketId(ticket.get().getSupportTicketId())
-                    .setOpenTraceId(StringUtils.isNotBlank(ticket.get().getOpenTraceId()) ? ticket.get().getOpenTraceId() : " ")
-                    .setSpanId(StringUtils.isNotBlank(ticket.get().getSpanId()) ? ticket.get().getSpanId() : " ")
-                    .build();
+               TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
+                       .setId(ticket.get().getTicket().getId())
+                       .setCurrentAgent(currentAgentGrpc)
+                       .setCategory(categoryGrpc)
+                       .setDevice(deviceGrpc)
+                       .setIssueOpened(StringUtils.isNotBlank(ticket.get().getTicket().getIssueOpened()) ? ticket.get().getTicket().getIssueOpened() : " ")
+                       .setIssueClosed(StringUtils.isNotBlank(ticket.get().getTicket().getIssueClosed()) ? ticket.get().getTicket().getIssueClosed() : " ")
+                       .setState(ticket.get().getTicket().getState())
+                       .setDescription(ticket.get().getTicket().getDescription())
+                       .setMetaInfo(metaInfoGrpc)
+                       .setSupportTicketId(ticket.get().getSupportTicketId())
+                       .setOpenTraceId(StringUtils.isNotBlank(ticket.get().getOpenTraceId()) ? ticket.get().getOpenTraceId() : " ")
+                       .setSpanId(StringUtils.isNotBlank(ticket.get().getSpanId()) ? ticket.get().getSpanId() : " ")
+                       .build();
 
-            GetTicketByIdResponse getTicketResponse = GetTicketByIdResponse.newBuilder()
-                    .setTicket(ticketResponseGrpc)
-                    .setId(ticket.get().getId().toString()).build();
-            responseObserver.onNext(getTicketResponse);
-            responseObserver.onCompleted();
-            log.info("Retrieved Ticket id : {}", uuid);
-        } catch (SVCRPSSupportTicketBusinessException e) {
+               GetTicketByIdResponse getTicketResponse = GetTicketByIdResponse.newBuilder()
+                       .setTicket(ticketResponseGrpc)
+                       .setId(ticket.get().getId().toString()).build();
+               responseObserver.onNext(getTicketResponse);
+               responseObserver.onCompleted();
+               log.info("Retrieved Ticket id : {}", uuid);
+           }
+           else{
+               throw new RecordNotFoundException("Object is not Present");
+           }
+        }
+        catch (ValidationException e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    // Here is our custom exception information
+                    .augmentDescription(new Date().toString())
+                    .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+
+            log.error(e.getMessage());
+        }
+        catch (RecordNotFoundException e) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     // Here is our custom exception information
+                    .augmentDescription(new Date().toString())
+                    .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+
+            log.error(e.getMessage());
+        }
+        catch (Exception e) {
+            responseObserver.onError(Status.INTERNAL
+                    .augmentDescription(new Date().toString())
                     .withDescription(e.getMessage())
                     .withCause(e)
                     .asRuntimeException());
@@ -282,6 +313,12 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
             log.info("Successfully added a Support Ticket resource {}", request.getDeviceId());
 
         } catch (Exception e) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    // Here is our custom exception information
+                    .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+
             log.error(e.getMessage());
         }
     }
@@ -307,6 +344,12 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
         } catch (Exception e) {
             Status status = Status.fromThrowable(e);
             log.error("Delete Ticket Exception occurred for" + status.getCode() + " : " + status.getDescription());
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    // Here is our custom exception information
+                    .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+            log.error(e.getMessage());
         }
     }
 
