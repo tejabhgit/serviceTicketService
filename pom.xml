@@ -20,6 +20,8 @@
 		<junit.version>5.7.2</junit.version>
 		<commons.version>3.11</commons.version>
 		<grpc.version>2.5.1.RELEASE</grpc.version>
+		<!--<opentracing-spring-jaeger-cloud-starter.version>3.3.1</opentracing-spring-jaeger-cloud-starter.version>-->
+		<opentelemetry.version>0.15.0</opentelemetry.version>
 	</properties>
 
 	<dependencies>
@@ -35,6 +37,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.opentracing.contrib</groupId>
+			<artifactId>opentracing-spring-jaeger-cloud-starter</artifactId>
+			<version>3.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>io.nats</groupId>
@@ -107,7 +114,29 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-extension-annotations</artifactId>
+		</dependency>
+
 	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.opentelemetry</groupId>
+				<artifactId>opentelemetry-bom</artifactId>
+				<version>${opentelemetry.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<extensions>

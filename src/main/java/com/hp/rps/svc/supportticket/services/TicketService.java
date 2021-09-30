@@ -16,6 +16,7 @@ import com.example.grpc.server.grpcserver.PageableGrpc;
 import com.example.grpc.server.grpcserver.TicketContentGrpc;
 import com.example.grpc.server.grpcserver.TicketServiceGrpc;
 import com.hp.rps.svc.supportticket.errorhandling.custom.PagedResultNotFoundException;
+import com.hp.rps.svc.supportticket.errorhandling.custom.RecordNotFoundException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.SVCRPSSupportTicketBusinessException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.ValidationException;
 import com.hp.rps.svc.supportticket.model.Category;
@@ -38,9 +39,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.extension.annotations.WithSpan;
 import javax.validation.constraints.Null;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @GrpcService
@@ -60,10 +65,17 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
         this.deviceService = deviceService;
     }
 
+
     @Override
     @Timed
+    @WithSpan
     public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
         Page<Ticket> pagedResult = null;
+        log.info("Doing some work In new span");
+        Span span = Span.current();
+        span.setAttribute("attribute.a1", "some value");
+        span.addEvent("app.processing1.start", atttributes("123"));
+        span.addEvent("app.processing1.end", atttributes("123"));
         try {
 
             //validations
@@ -156,12 +168,27 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
         }
     }
 
+    public void doSomeWorkSameSpan() throws InterruptedException {
+        Span span = Span.current();
+
+        span.setAttribute("attribute.a0", "value");
+        log.info("Doing some work In Same span");
+        TimeUnit.SECONDS.sleep(1);
+    }
+
+
     @Override
     @Timed
+    @WithSpan
     public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
 
         try {
-            //validations
+            log.info("Doing some work In Nested span");
+            Span span = Span.current();
+            span.setAttribute("attribute.a2", "some value");
+            span.addEvent("app.processing2.start", atttributes("321"));
+            TimeUnit.SECONDS.sleep(1);
+            span.addEvent("app.processing2.end", atttributes("321"));
 
             List<Exception> errors = new ArrayList<Exception>();
             if (!TicketServiceValidator.validateGetRequest(request)) {
@@ -261,9 +288,11 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
             percentiles = {0.95, 0.99},
             extraTags = {"version", "1.0"}
     )
+    @WithSpan
     public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
 
         try {
+            doSomeWorkNewSpan();
             log.info("Creating a Support Ticket resource {}", request.getDeviceId());
             Ticket ticket = new Ticket();
             String ticketId = CommonUtil.uniqueUuid().toString();
@@ -327,7 +356,7 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     @Timed
     public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
         try {
-            //validations
+            doSomeWorkNewSpan();
             if (!TicketServiceValidator.validateDeleteRequest(request)) {
                 Status status = Status.FAILED_PRECONDITION.withDescription("Delete Service failed");
                 responseObserver.onError(status.asRuntimeException());
@@ -351,6 +380,19 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
                     .asRuntimeException());
             log.error(e.getMessage());
         }
+    }
+
+
+    @WithSpan
+    private void doSomeWorkNewSpan() {
+        log.info("Doing some work In New span");
+        Span span = Span.current();
+        span.setAttribute("attribute.a2", "some value");
+        span.addEvent("app.processing2.start", atttributes("321"));
+        span.addEvent("app.processing2.end", atttributes("321"));
+    }
+    private Attributes atttributes(String id) {
+        return Attributes.of(AttributeKey.stringKey("app.id"), "" + id);
     }
 
 }

@@ -46,6 +46,11 @@ nats:
 server:
   port: 9192
 
+opentracing:
+  jaeger:
+    http-sender:
+      url: http://localhost:14268/api/traces
+
 logging:
   level:
     org.springframework: ERROR
