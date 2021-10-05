@@ -1,8 +1,13 @@
 management:
+  server:
+    port: 8080
   endpoints:
     web:
       exposure:
         include: "*"
+  endpoint:
+    shutdown:
+      enabled: true
     health:
       show-details: always
   metrics:
@@ -46,10 +51,15 @@ nats:
 server:
   port: 9192
 
-opentracing:
-  jaeger:
-    http-sender:
-      url: http://localhost:14268/api/traces
+#opentracing:
+#  jaeger:
+#    service-name: svc-rps-support-ticket
+#    enabled: TRUE
+#    udp-sender:
+#      host: jaeger
+#    http-sender:
+#      url: http://localhost:14268/api/traces
+
 
 logging:
   level:

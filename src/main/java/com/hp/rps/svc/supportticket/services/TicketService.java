@@ -1,20 +1,6 @@
 package com.hp.rps.svc.supportticket.services;
 
-import com.example.grpc.server.grpcserver.AddTicketRequest;
-import com.example.grpc.server.grpcserver.AddTicketResponse;
-import com.example.grpc.server.grpcserver.CategoryGrpc;
-import com.example.grpc.server.grpcserver.CurrentAgentGrpc;
-import com.example.grpc.server.grpcserver.DeleteTicketRequest;
-import com.example.grpc.server.grpcserver.DeleteTicketResponse;
-import com.example.grpc.server.grpcserver.DeviceGrpc;
-import com.example.grpc.server.grpcserver.FindAllTicketsRequest;
-import com.example.grpc.server.grpcserver.FindAllTicketsResponse;
-import com.example.grpc.server.grpcserver.GetTicketByIdRequest;
-import com.example.grpc.server.grpcserver.GetTicketByIdResponse;
-import com.example.grpc.server.grpcserver.MetaInfoGrpc;
-import com.example.grpc.server.grpcserver.PageableGrpc;
-import com.example.grpc.server.grpcserver.TicketContentGrpc;
-import com.example.grpc.server.grpcserver.TicketServiceGrpc;
+import com.example.grpc.server.grpcserver.*;
 import com.hp.rps.svc.supportticket.errorhandling.custom.PagedResultNotFoundException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.RecordNotFoundException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.SVCRPSSupportTicketBusinessException;
@@ -31,6 +17,8 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.annotation.Timed;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +31,8 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.extension.annotations.WithSpan;
+import reactor.core.publisher.Mono;
+
 import javax.validation.constraints.Null;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -55,14 +45,17 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     private TicketRepository repository;
     private CurrentAgentService currentAgentService;
     private DeviceService deviceService;
+    private JaegerClientService jaegerClientService;
 
     @Autowired
     public void TicketService(TicketRepository repository,
                               CurrentAgentService currentAgentService,
-                              DeviceService deviceService) {
+                              DeviceService deviceService,
+                              JaegerClientService jaegerClientService) {
         this.repository = repository;
         this.currentAgentService = currentAgentService;
         this.deviceService = deviceService;
+        this.jaegerClientService= jaegerClientService;
     }
 
 
@@ -71,14 +64,12 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     @WithSpan
     public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
         Page<Ticket> pagedResult = null;
-        log.info("Doing some work In new span");
-        Span span = Span.current();
-        span.setAttribute("attribute.a1", "some value");
-        span.addEvent("app.processing1.start", atttributes("123"));
-        span.addEvent("app.processing1.end", atttributes("123"));
+
+
         try {
 
             //validations
+
             if (!TicketServiceValidator.validateFindAllRequest(request)) {
                 throw new SVCRPSSupportTicketBusinessException("validateFindAllRequest falied as Request couldn't be validated");
                 //error handling
@@ -183,18 +174,23 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
 
         try {
+
+            Mono<String> mono= jaegerClientService.get(Integer.parseInt(request.getId()));
             log.info("Doing some work In Nested span");
             Span span = Span.current();
             span.setAttribute("attribute.a2", "some value");
             span.addEvent("app.processing2.start", atttributes("321"));
-            TimeUnit.SECONDS.sleep(1);
-            span.addEvent("app.processing2.end", atttributes("321"));
+            //TimeUnit.SECONDS.sleep(1);
+            //span.addEvent("app.processing2.end", atttributes("321"));
 
             List<Exception> errors = new ArrayList<Exception>();
             if (!TicketServiceValidator.validateGetRequest(request)) {
                 throw new ValidationException("validateFindAllRequest falied as Request couldn't be validated");
             }
             UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
+
+            //jaegerClientService.get(uuid.toString());
+
             log.info("Fetching Ticket by Ticket id : {}", uuid);
             Optional<Ticket> ticket = repository.findById(uuid);
            if(ticket.isPresent()) {
@@ -353,6 +349,50 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     }
 
     @Override
+    @WithSpan
+    public void loginRequest(LoginRequest request, StreamObserver<APIResponse> responseObserver) {
+        try {
+            log.info("Doing some work In New span");
+            //Tracer tracer =
+              //      openTelemetry.getTracer("instrumentation-library-name", "1.0.0");
+            //TracingContextUtils.
+
+            Tracer tracer =
+                    GlobalOpenTelemetry.getTracer("instrumentation-library-name");
+
+            Span span = Span.current();
+            span.setAttribute("attribute.a2", "some value");
+            span.addEvent("app.processing2.start", atttributes("321"));
+           // span.addEvent("app.processing2.end", atttributes("321"));
+
+            String username = request.getUsername();
+            String password = request.getPassword();
+
+            APIResponse.Builder response = APIResponse.newBuilder();
+
+            if(username.equals(password)){
+                response.setResponseCode(1).setResponseMessage("Success");
+
+            } else  {
+                response.setResponseCode(0).setResponseMessage("Invalid username or password");
+            }
+
+            responseObserver.onNext(response.build());
+            responseObserver.onCompleted();
+
+        } catch (Exception e) {
+            Status status = Status.fromThrowable(e);
+            log.error("Delete Ticket Exception occurred for" + status.getCode() + " : " + status.getDescription());
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    // Here is our custom exception information
+                    .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+            log.error(e.getMessage());
+        }
+    }
+
+    @Override
     @Timed
     public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
         try {
@@ -394,6 +434,10 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     private Attributes atttributes(String id) {
         return Attributes.of(AttributeKey.stringKey("app.id"), "" + id);
     }
+
+
+
+
 
 }
 

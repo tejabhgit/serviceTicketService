@@ -13,10 +13,33 @@ services:
       - 4222:4222
     command: ["-js"]
 
-  jaeger-allinone:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - 6831:6831/udp
-      - 6832:6832/udp
-      - 16686:16686
-      - 14268:14268
+
+#  jaeger-allinone:
+#    image: jaegertracing/all-in-one:latest
+#    ports:
+#      - 6831:6831/udp
+#      - 6832:6832/udp
+#      - 16686:16686
+#      - 14268:14268
+
+
+#  prometheus:
+#    image: prom/prometheus
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+#    hostname: prometheus
+#  grafana:
+#    image: grafana/grafana
+#    ports:
+#      - "3000:3000"
+#    hostname: grafana
+
+
+  svc-rps-support-ticket:
+    image: svc-rps-support-ticket
+#    restart: on-failure
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - SPRING_APPLICATION_NAME=animal-name-service

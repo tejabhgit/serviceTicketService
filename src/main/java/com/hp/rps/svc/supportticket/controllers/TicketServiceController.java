@@ -3,6 +3,7 @@ package com.hp.rps.svc.supportticket.controllers;
 import com.hp.rps.svc.supportticket.model.MessageResource;
 import com.hp.rps.svc.supportticket.model.Ticket;
 import com.hp.rps.svc.supportticket.repository.TicketRepository;
+import com.hp.rps.svc.supportticket.services.JaegerClientService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,12 +28,14 @@ import java.util.UUID;
 public class TicketServiceController {
 	
 	private TicketRepository ticketRepository;
-	private StreamBridge streamBridge; 
+	private StreamBridge streamBridge;
+	private JaegerClientService jaegerClientService;
 
 	@Autowired
-	public TicketServiceController (TicketRepository ticketRepository, StreamBridge streamBridge){
+	public TicketServiceController (TicketRepository ticketRepository, StreamBridge streamBridge,JaegerClientService jaegerClientService){
 		this.ticketRepository = ticketRepository;
 		this.streamBridge= streamBridge;
+		this.jaegerClientService= jaegerClientService;
 	}
 
 	@PostMapping("/addTicket")
@@ -74,6 +78,11 @@ public class TicketServiceController {
 		messageResource.setName("RPS_TICKET");
 		 streamBridge.send("notificationEventSupplier-out-0", MessageBuilder.withPayload(messageResource.getName()).build());
 		return messageResource;
+	}
+
+	@GetMapping("/jaeger/client/{id}")
+	public Mono<String> get(@PathVariable("id") Integer id) {
+		return jaegerClientService.get(id);
 	}
 
 }

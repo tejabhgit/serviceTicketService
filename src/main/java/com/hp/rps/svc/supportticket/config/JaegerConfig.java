@@ -1,28 +1,19 @@
 package com.hp.rps.svc.supportticket.config;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import io.jaegertracing.internal.samplers.ConstSampler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.SchedulingConfigurer;
-import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import io.jaegertracing.internal.JaegerTracer;
+import org.springframework.web.reactive.function.client.WebClient;
+
 @Configuration
-//@EnableScheduling
 public class JaegerConfig {
 
-    /*@Override
-    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        taskRegistrar.setScheduler(schedulingExecutor());
+    @Bean
+    public WebClient webClient() {
+        return WebClient.create();
     }
-
-    @Bean(destroyMethod = "shutdown")
-    public Executor schedulingExecutor() {
-        return Executors.newScheduledThreadPool(2);
-    }*/
 
     @Bean
     public JaegerTracer jaegerTracer() {
