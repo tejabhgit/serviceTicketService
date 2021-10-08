@@ -1,507 +1,215 @@
 package com.hp.rps.svc.supportticket.services;
 
-import com.example.grpc.server.grpcserver.*;
-import com.hp.rps.svc.supportticket.errorhandling.custom.PagedResultNotFoundException;
+import com.example.grpc.server.grpcserver.AddTicketRequest;
+import com.example.grpc.server.grpcserver.CategoryGrpc;
+import com.example.grpc.server.grpcserver.CurrentAgentGrpc;
+import com.example.grpc.server.grpcserver.DeleteTicketRequest;
+import com.example.grpc.server.grpcserver.DeviceGrpc;
+import com.example.grpc.server.grpcserver.FindAllTicketsRequest;
+import com.example.grpc.server.grpcserver.GetTicketByIdRequest;
+import com.example.grpc.server.grpcserver.MetaInfoGrpc;
+import com.example.grpc.server.grpcserver.PageableGrpc;
+import com.example.grpc.server.grpcserver.TicketContentGrpc;
+import com.example.grpc.server.grpcserver.UpdateOneTicketByIDRequest;
+import com.hp.rps.svc.supportticket.datalayer.TicketDataService;
 import com.hp.rps.svc.supportticket.errorhandling.custom.RecordNotFoundException;
-import com.hp.rps.svc.supportticket.errorhandling.custom.SVCRPSSupportTicketBusinessException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.ValidationException;
 import com.hp.rps.svc.supportticket.model.Category;
 import com.hp.rps.svc.supportticket.model.CurrentAgent;
 import com.hp.rps.svc.supportticket.model.Device;
 import com.hp.rps.svc.supportticket.model.MetaInfo;
 import com.hp.rps.svc.supportticket.model.Ticket;
-import com.hp.rps.svc.supportticket.model.TicketContent;
-import com.hp.rps.svc.supportticket.repository.TicketRepository;
 import com.hp.rps.svc.supportticket.util.CommonUtil;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
 import io.micrometer.core.annotation.Timed;
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.resources.Resource;
-import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.trace.Span;
-//import io.opentelemetry.extension.annotations.WithSpan;
-import reactor.core.publisher.Mono;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import javax.validation.constraints.Null;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
-@GrpcService
-public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
+@RequiredArgsConstructor
+@Service
+public class TicketService {
 
-    private static final String INSTRUMENTATION_LIBRARY = "io.opentelemetry.example.JaegerExample";
-    private static final String OTEL_SERVICE_NAME = "svc-rps-support-ticket";
-
-   /* public TicketService(OpenTelemetry openTelemetry) {
-        tracer = openTelemetry.getTracer(INSTRUMENTATION_LIBRARY);
-    }
-*/
-
-    //private final Tracer tracer;
-
-    private TicketRepository repository;
+    private TicketDataService ticketDataService;
     private CurrentAgentService currentAgentService;
     private DeviceService deviceService;
-    private JaegerClientService jaegerClientService;
 
     @Autowired
-    public void TicketService(TicketRepository repository,
+    public void TicketService(TicketDataService ticketDataService,
                               CurrentAgentService currentAgentService,
-                              DeviceService deviceService,
-                              JaegerClientService jaegerClientService) {
-        this.repository = repository;
+                              DeviceService deviceService) {
         this.currentAgentService = currentAgentService;
         this.deviceService = deviceService;
-        this.jaegerClientService= jaegerClientService;
+        this.ticketDataService = ticketDataService;
     }
 
 
-    @Override
-    @Timed
-   // @WithSpan
-    public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
+    public TicketListResponse getPagedTicketResponse(FindAllTicketsRequest request) {
         Page<Ticket> pagedResult = null;
-
-
-        try {
-
-            //validations
-
-            if (!TicketServiceValidator.validateFindAllRequest(request)) {
-                throw new SVCRPSSupportTicketBusinessException("validateFindAllRequest falied as Request couldn't be validated");
-                //error handling
-            }
-            ;
-
-            Pageable paging = PageRequest.of(request.getPage(), request.getSize(), Sort.by(request.getSortBy()));
-
-            pagedResult = Objects.nonNull(paging) ? repository.findAll(paging) : repository.findAll(Pageable.unpaged());
-
-            PageableGrpc pageableGrpc = PageableGrpc.newBuilder()
-                    .setLast(pagedResult.isLast())
-                    .setTotalElements(pagedResult.getTotalElements())
-                    .setTotalPages(pagedResult.getTotalPages())
-                    .setNumberOfElements(pagedResult.getNumberOfElements())
-                    .setFirst(pagedResult.isFirst())
-                    .setNumber(pagedResult.getNumber())
-                    .setEmpty(pagedResult.isEmpty()).build();
-            FindAllTicketsResponse findAllTicketsResponse = FindAllTicketsResponse.newBuilder().setPageableGrpc(pageableGrpc).build();
-            responseObserver.onNext(findAllTicketsResponse);
-
-            List<TicketContentGrpc> listTicketResponse = new ArrayList<TicketContentGrpc>();
-
-            if (pagedResult.hasContent()) {
-                List<Ticket> listTicketPage = pagedResult.getContent();
-
-                listTicketPage.stream().filter(Objects::nonNull)
-                        .filter(ticketPage -> ticketPage.getTicket() != null)
-                        .forEach(ticketPage -> {
-
-                            CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
-                                    .setUserId(ticketPage.getTicket().getCurrentAgent().getUserId())
-                                    .setFirstName(ticketPage.getTicket().getCurrentAgent().getFirstName())
-                                    .setLastName(ticketPage.getTicket().getCurrentAgent().getLastName())
-                                    .setGravatar(ticketPage.getTicket().getCurrentAgent().getGravatar())
-                                    .build();
-
-                            CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
-                                    .setName(ticketPage.getTicket().getCategory().getName())
-                                    .setDescription(ticketPage.getTicket().getCategory().getDescription())
-                                    .build();
-
-                            DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
-                                    .setDeviceId(ticketPage.getTicket().getDevice().getDeviceId())
-                                    .setHostname(ticketPage.getTicket().getDevice().getHostname())
-                                    .setState(ticketPage.getTicket().getDevice().getState())
-                                    .setOs(ticketPage.getTicket().getDevice().getOs())
-                                    .build();
-                            MetaInfoGrpc metaInfoGrpc = MetaInfoGrpc.newBuilder()
-                                    .setCreatedDate(StringUtils.isNotBlank(ticketPage.getMetaInfo().getCreatedDate()) ? ticketPage.getMetaInfo().getCreatedDate() : " ")
-                                    .setUpdatedDate(StringUtils.isNotBlank(ticketPage.getMetaInfo().getUpdatedDate()) ? ticketPage.getMetaInfo().getUpdatedDate() : " ")
-                                    .setDeletedDate(StringUtils.isNotBlank(ticketPage.getMetaInfo().getDeletedDate()) ? ticketPage.getMetaInfo().getDeletedDate() : " ")
-                                    .setVersion(StringUtils.isNotBlank(ticketPage.getMetaInfo().getVersion()) ? ticketPage.getMetaInfo().getVersion() : " ")
-                                    .build();
-
-                            TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
-                                    .setId(ticketPage.getTicket().getId())
-                                    .setCurrentAgent(currentAgentGrpc)
-                                    .setCategory(categoryGrpc)
-                                    .setDevice(deviceGrpc).setIssueOpened(ticketPage.getTicket().getIssueOpened())
-                                    .setIssueOpened(StringUtils.isNotBlank(ticketPage.getTicket().getIssueOpened()) ? ticketPage.getTicket().getIssueOpened() : " ")
-                                    .setIssueClosed(StringUtils.isNotBlank(ticketPage.getTicket().getIssueClosed()) ? ticketPage.getTicket().getIssueClosed() : " ")
-                                    .setState(ticketPage.getTicket().getState())
-                                    .setDescription(ticketPage.getTicket().getDescription())
-                                    .setMetaInfo(metaInfoGrpc)
-                                    .setSupportTicketId(ticketPage.getSupportTicketId())
-                                    .setOpenTraceId(StringUtils.isNotBlank(ticketPage.getOpenTraceId()) ? ticketPage.getOpenTraceId() : " ")
-                                    .setSpanId(StringUtils.isNotBlank(ticketPage.getSpanId()) ? ticketPage.getSpanId() : " ")
-                                    .build();
-                            listTicketResponse.add(ticketResponseGrpc);
-                        });
-            }
-            listTicketResponse.stream().filter(listTicketRes -> listTicketRes.hasDevice())
-                    .forEach(listTicketRes -> {
-                        responseObserver.onNext(FindAllTicketsResponse
-                                .newBuilder().setTicket(listTicketRes).build());
-                    });
-            responseObserver.onCompleted();
-            log.info("Found all tickets of size: {}", listTicketResponse.size());
-        } catch (Exception e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    // Here is our custom exception information
-                          //  .augmentDescription().
-                   // .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
+        //validations
+        if (!TicketServiceValidator.validateFindAllRequest(request)) {
+            throw new ValidationException("validation exception sortBy parm cannot be null");
         }
+        pagedResult = ticketDataService.findAllPagedResponse(request, pagedResult);
+        if (pagedResult.isEmpty()) {
+            throw new RecordNotFoundException("No Records Found");
+        }
+        PageableGrpc pageableGrpc = PageableGrpc.newBuilder()
+                .setLast(pagedResult.isLast())
+                .setTotalElements(pagedResult.getTotalElements())
+                .setTotalPages(pagedResult.getTotalPages())
+                .setNumberOfElements(pagedResult.getNumberOfElements())
+                .setFirst(pagedResult.isFirst())
+                .setNumber(pagedResult.getNumber())
+                .setEmpty(pagedResult.isEmpty()).build();
+
+        List<TicketContentGrpc.Builder> listTicketResponse = new ArrayList<TicketContentGrpc.Builder>();
+        List<Ticket> listTicketPage = pagedResult.getContent();
+        listTicketPage.stream().filter(Objects::nonNull)
+                .forEach(ticketPage -> {
+                    TicketContentGrpc.Builder ticketContentGrpc = buildTicketResponse(ticketPage);
+                    listTicketResponse.add(ticketContentGrpc);
+                });
+        TicketListResponse ticketListResponse = TicketListResponse.builder()
+                .pageableGrpc(pageableGrpc)
+                .TicketContentList(listTicketResponse)
+                .build();
+        return ticketListResponse;
     }
 
-    public void doSomeWorkSameSpan() throws InterruptedException {
-        Span span = Span.current();
-
-        span.setAttribute("attribute.a0", "value");
-        log.info("Doing some work In Same span");
-        TimeUnit.SECONDS.sleep(1);
+    public TicketContentGrpc.Builder getTicketById(GetTicketByIdRequest request) {
+        log.info("Fetching Ticket by Ticket id : {} or support Ticket id: {}", request.getId(), request.getSupportTicketId());
+        Ticket ticket = ticketDataService.findByRequest(CommonUtil.nullCheckUuid(request.getId()), request.getSupportTicketId()).orElseThrow(RecordNotFoundException::new);
+        TicketContentGrpc.Builder ticketContentGrpc = buildTicketResponse(ticket);
+        return ticketContentGrpc;
     }
 
+    public void addTicket(AddTicketRequest request) {
+        log.info("Creating a Support Ticket resource {}", request.getDeviceId());
+        Ticket ticket = buildTicketEntity(request);
+        ticketDataService.insert(ticket);
+        log.info("Successfully added a Support Ticket resource {}", ticket.getId().toString());
+    }
 
-    @Override
     @Timed
-    //@WithSpan
-    public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
-
-        try {
-
-            Mono<String> mono= jaegerClientService.get(Integer.parseInt(request.getId()));
-            log.info("Doing some work In Nested span");
-            Span span = Span.current();
-            span.setAttribute("attribute.a2", "some value");
-            span.addEvent("app.processing2.start", atttributes("321"));
-            //TimeUnit.SECONDS.sleep(1);
-            //span.addEvent("app.processing2.end", atttributes("321"));
-
-            List<Exception> errors = new ArrayList<Exception>();
-            if (!TicketServiceValidator.validateGetRequest(request)) {
-                throw new ValidationException("validateFindAllRequest falied as Request couldn't be validated");
-            }
-            UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
-
-            //jaegerClientService.get(uuid.toString());
-
-            log.info("Fetching Ticket by Ticket id : {}", uuid);
-            Optional<Ticket> ticket = repository.findById(uuid);
-           if(ticket.isPresent()) {
-               CurrentAgentGrpc currentAgentGrpc = CurrentAgentGrpc.newBuilder()
-                       .setUserId(ticket.get().getTicket().getCurrentAgent().getUserId())
-                       .setFirstName(ticket.get().getTicket().getCurrentAgent().getFirstName())
-                       .setLastName(ticket.get().getTicket().getCurrentAgent().getLastName())
-                       .setGravatar(ticket.get().getTicket().getCurrentAgent().getGravatar())
-                       .build();
-
-               CategoryGrpc categoryGrpc = CategoryGrpc.newBuilder()
-                       .setName(ticket.get().getTicket().getCategory().getName())
-                       .setDescription(ticket.get().getTicket().getCategory().getDescription())
-                       .build();
-
-               DeviceGrpc deviceGrpc = DeviceGrpc.newBuilder()
-                       .setDeviceId(ticket.get().getTicket().getDevice().getDeviceId())
-                       .setHostname(ticket.get().getTicket().getDevice().getHostname())
-                       .setState(ticket.get().getTicket().getDevice().getState())
-                       .setOs(ticket.get().getTicket().getDevice().getOs())
-                       .build();
-
-
-               MetaInfoGrpc metaInfoGrpc = MetaInfoGrpc.newBuilder()
-                       .setCreatedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getCreatedDate()) ? ticket.get().getMetaInfo().getCreatedDate() : " ")
-                       .setUpdatedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getUpdatedDate()) ? ticket.get().getMetaInfo().getUpdatedDate() : " ")
-                       .setDeletedDate(StringUtils.isNotBlank(ticket.get().getMetaInfo().getDeletedDate()) ? ticket.get().getMetaInfo().getDeletedDate() : " ")
-                       .setVersion(StringUtils.isNotBlank(ticket.get().getMetaInfo().getVersion()) ? ticket.get().getMetaInfo().getVersion() : " ")
-                       .build();
-
-               TicketContentGrpc ticketResponseGrpc = TicketContentGrpc.newBuilder()
-                       .setId(ticket.get().getTicket().getId())
-                       .setCurrentAgent(currentAgentGrpc)
-                       .setCategory(categoryGrpc)
-                       .setDevice(deviceGrpc)
-                       .setIssueOpened(StringUtils.isNotBlank(ticket.get().getTicket().getIssueOpened()) ? ticket.get().getTicket().getIssueOpened() : " ")
-                       .setIssueClosed(StringUtils.isNotBlank(ticket.get().getTicket().getIssueClosed()) ? ticket.get().getTicket().getIssueClosed() : " ")
-                       .setState(ticket.get().getTicket().getState())
-                       .setDescription(ticket.get().getTicket().getDescription())
-                       .setMetaInfo(metaInfoGrpc)
-                       .setSupportTicketId(ticket.get().getSupportTicketId())
-                       .setOpenTraceId(StringUtils.isNotBlank(ticket.get().getOpenTraceId()) ? ticket.get().getOpenTraceId() : " ")
-                       .setSpanId(StringUtils.isNotBlank(ticket.get().getSpanId()) ? ticket.get().getSpanId() : " ")
-                       .build();
-
-               GetTicketByIdResponse getTicketResponse = GetTicketByIdResponse.newBuilder()
-                       .setTicket(ticketResponseGrpc)
-                       .setId(ticket.get().getId().toString()).build();
-               responseObserver.onNext(getTicketResponse);
-               responseObserver.onCompleted();
-               log.info("Retrieved Ticket id : {}", uuid);
-           }
-           else{
-               throw new RecordNotFoundException("Object is not Present");
-           }
-        }
-        catch (ValidationException e) {
-            responseObserver.onError(Status.NOT_FOUND
-                    // Here is our custom exception information
-                    .augmentDescription(new Date().toString())
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-
-            log.error(e.getMessage());
-        }
-        catch (RecordNotFoundException e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    // Here is our custom exception information
-                    .augmentDescription(new Date().toString())
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-
-            log.error(e.getMessage());
-        }
-        catch (Exception e) {
-            responseObserver.onError(Status.INTERNAL
-                    .augmentDescription(new Date().toString())
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-
-            log.error(e.getMessage());
-        }
+    public void deleteTicket(DeleteTicketRequest request) {
+        log.info("Deleting Ticket by Ticket id : {}", request.getId());
+        ticketDataService.deleteTicket(CommonUtil.nullCheckUuid(request.getId()));
     }
 
-    @Override
-    @Timed(value = "addTicket",
-            histogram = true,
-            percentiles = {0.95, 0.99},
-            extraTags = {"version", "1.0"}
-    )
-   // @WithSpan
-    public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
+    public TicketContentGrpc.Builder buildTicketResponse(Ticket ticket) {
+        CurrentAgentGrpc.Builder currentAgentGrpc = CurrentAgentGrpc.newBuilder();
+        CategoryGrpc.Builder categoryGrpc = CategoryGrpc.newBuilder();
+        DeviceGrpc.Builder deviceGrpc = DeviceGrpc.newBuilder();
+        MetaInfoGrpc.Builder metaInfoGrpc = MetaInfoGrpc.newBuilder();
 
-        try {
-            doSomeWorkNewSpan();
-            log.info("Creating a Support Ticket resource {}", request.getDeviceId());
-            Ticket ticket = new Ticket();
-            String ticketId = CommonUtil.uniqueUuid().toString();
-            ticket.setId(StringUtils.isNotBlank(ticketId) ? UUID.fromString(ticketId) : null);
-            ticket.setSupportTicketId(CommonUtil.generateIncrementalNumber());
-
-
-            //validations
-            TicketServiceValidator.validateAddRequest(request);
-            TicketServiceValidator.validateTicketIds(ticket);
-
-            //create metadata
-            MetaInfo metaInfo = new MetaInfo();
-            metaInfo.setVersion("v1");
-            metaInfo.setCreatedDate(CommonUtil.generateSystemDate());
-            metaInfo.setUpdatedDate(null);
-            metaInfo.setDeletedDate(null);
-            ticket.setMetaInfo(metaInfo);
-
-            //service to fetch Current Agent
-            CurrentAgent currentAgent = currentAgentService.getCurrentAgent(request);
-
-            //service to fetch Device Agent
-            Device device = deviceService.getDevice(request);
-
-            Category category = new Category();
-            category.setDescription(request.getDescription());
-            category.setName(request.getCategory());
-
-            TicketContent ticketContent = new TicketContent();
-            ticketContent.setId(ticketId); //generated ticket id
-            ticketContent.setCurrentAgent(currentAgent);
-            ticketContent.setCategory(category);
-            ticketContent.setDevice(device);
-            ticketContent.setIssueOpened(CommonUtil.generateSystemDate());
-            ticketContent.setIssueClosed(null);
-            ticketContent.setState("Active");
-            ticketContent.setDescription("Ticket Support is being worked");
-            ticket.setOpenTraceId(null);
-            ticket.setSpanId(null);
-
-            ticket.setTicket(ticketContent);
-            repository.save(ticket);
-            AddTicketResponse addTicketReponse = AddTicketResponse.newBuilder().setResponseId(201).build();
-            responseObserver.onNext(addTicketReponse);
-            responseObserver.onCompleted();
-            log.info("Successfully added a Support Ticket resource {}", request.getDeviceId());
-
-        } catch (Exception e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    // Here is our custom exception information
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-
-            log.error(e.getMessage());
+        if (Objects.nonNull(ticket.getCurrentAgent())) {
+            Optional.ofNullable(ticket.getCurrentAgent().getUserId().toString()).ifPresent(currentAgentGrpc::setUserId);
+            Optional.ofNullable(ticket.getCurrentAgent().getFirstName()).ifPresent(currentAgentGrpc::setFirstName);
+            Optional.ofNullable(ticket.getCurrentAgent().getLastName()).ifPresent(currentAgentGrpc::setLastName);
+            Optional.ofNullable(ticket.getCurrentAgent().getGravatar()).ifPresent(currentAgentGrpc::setGravatar);
+            currentAgentGrpc.build();
         }
-    }
-
-
-    @Override
-    @Timed
-    public void deleteTicket(DeleteTicketRequest request, StreamObserver<DeleteTicketResponse> responseObserver) {
-        try {
-            doSomeWorkNewSpan();
-            if (!TicketServiceValidator.validateDeleteRequest(request)) {
-                Status status = Status.FAILED_PRECONDITION.withDescription("Delete Service failed");
-                responseObserver.onError(status.asRuntimeException());
-                return;
-            }
-            UUID uuid = StringUtils.isNotBlank(request.getId()) ? UUID.fromString(request.getId()) : null;
-            log.info("Deleting Ticket by Ticket id : {}", uuid);
-            repository.deleteById(uuid);
-            DeleteTicketResponse deleteTicketResponse = DeleteTicketResponse.newBuilder().setResponse("Ticket deleted with id : " + uuid)
-                    .build();
-            responseObserver.onNext(deleteTicketResponse);
-            responseObserver.onCompleted();
-            log.info("Deleted Ticket id : {}", uuid);
-        } catch (Exception e) {
-            Status status = Status.fromThrowable(e);
-            log.error("Delete Ticket Exception occurred for" + status.getCode() + " : " + status.getDescription());
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    // Here is our custom exception information
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-            log.error(e.getMessage());
+        if (Objects.nonNull(ticket.getCategory())) {
+            Optional.ofNullable(ticket.getCategory().getName()).ifPresent(categoryGrpc::setName);
+            Optional.ofNullable(ticket.getCategory().getDescription()).ifPresent(categoryGrpc::setDescription);
+            categoryGrpc.build();
         }
-    }
-
-
-
-
-    @Override
-    // @WithSpan
-    public void loginRequest(LoginRequest request, StreamObserver<APIResponse> responseObserver) {
-        try {
-
-
-
-            OpenTelemetry openTelemetry = initOpenTelemetry("localhost", 14250);
-
-
-            Tracer tracer = openTelemetry.getTracer(INSTRUMENTATION_LIBRARY);
-
-            for (int i = 0; i < 10; i++) {
-
-                Span span = tracer.spanBuilder("Start my wonderful use case").startSpan();
-                log.info("TraceID : {}", span.getSpanContext().getTraceIdAsHexString());
-                span.addEvent("Event 0");
-                // execute my use case - here we simulate a wait
-                doWork();
-                span.addEvent("Event 1");
-                span.end();
-            }
-
-            log.info("Bye");
-
-            String username = request.getUsername();
-            String password = request.getPassword();
-
-            APIResponse.Builder response = APIResponse.newBuilder();
-
-            if(username.equals(password)){
-                response.setResponseCode(1).setResponseMessage("Success");
-
-            } else  {
-                response.setResponseCode(0).setResponseMessage("Invalid username or password");
-            }
-
-            responseObserver.onNext(response.build());
-            responseObserver.onCompleted();
-
-        } catch (Exception e) {
-            Status status = Status.fromThrowable(e);
-            log.error("Delete Ticket Exception occurred for" + status.getCode() + " : " + status.getDescription());
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    // Here is our custom exception information
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-            log.error(e.getMessage());
+        if (Objects.nonNull(ticket.getDevice())) {
+            Optional.ofNullable(ticket.getDevice().getDeviceId().toString()).ifPresent(deviceGrpc::setDeviceId);
+            Optional.ofNullable(ticket.getDevice().getHostname()).ifPresent(deviceGrpc::setHostname);
+            Optional.ofNullable(ticket.getDevice().getState()).ifPresent(deviceGrpc::setState);
+            Optional.ofNullable(ticket.getDevice().getOs()).ifPresent(deviceGrpc::setOs);
+            deviceGrpc.build();
         }
-    }
-
-
-    //  @WithSpan
-    private void doSomeWorkNewSpan() {
-        log.info("Doing some work In New span");
-        Span span = Span.current();
-        span.setAttribute("attribute.a2", "some value");
-        span.addEvent("app.processing2.start", atttributes("321"));
-        span.addEvent("app.processing2.end", atttributes("321"));
-    }
-    private Attributes atttributes(String id) {
-        return Attributes.of(AttributeKey.stringKey("app.id"), "" + id);
-    }
-
-
-
-    private void doWork() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            // do the right thing here
+        if (Objects.nonNull(ticket.getMetaInfo())) {
+            Optional.ofNullable(ticket.getMetaInfo().getCreatedDate()).ifPresent(createDt -> metaInfoGrpc.setCreatedDate(createDt.toString()));
+            Optional.ofNullable(ticket.getMetaInfo().getLastModifiedDate()).ifPresent(lstMdDt -> metaInfoGrpc.setLastModifiedDate(lstMdDt.toString()));
+            Optional.ofNullable(ticket.getMetaInfo().getDeletedDate()).ifPresent(delDte -> metaInfoGrpc.setDeletedDate(delDte.toString()));
+            Optional.ofNullable(ticket.getMetaInfo().getCreatedBy()).ifPresent(crtBy -> metaInfoGrpc.setCreatedBy(crtBy.toString()));
+            Optional.ofNullable(ticket.getMetaInfo().getLastModifiedBy()).ifPresent(lstModBy -> metaInfoGrpc.setLastModifiedBy(lstModBy.toString()));
+            Optional.ofNullable(ticket.getMetaInfo().getDeletedBy()).ifPresent(delBy -> metaInfoGrpc.setDeletedBy(delBy.toString()));
+            Optional.ofNullable(ticket.getMetaInfo().getVersion()).ifPresent(metaInfoGrpc::setVersion);
+            currentAgentGrpc.build();
         }
+        TicketContentGrpc.Builder ticketResponseGrpc = TicketContentGrpc.newBuilder();
+
+        Optional.ofNullable(ticket.getId().toString()).ifPresent(ticketResponseGrpc::setId);
+        if (Objects.nonNull(ticket.getCurrentAgent())) {
+            ticketResponseGrpc.setCurrentAgent(currentAgentGrpc);
+        }
+        if (Objects.nonNull(ticket.getDevice())) {
+            ticketResponseGrpc.setDevice(deviceGrpc);
+        }
+        if (Objects.nonNull(ticket.getCategory())) {
+            ticketResponseGrpc.setCategory(categoryGrpc);
+        }
+        if (Objects.nonNull(ticket.getMetaInfo())) {
+            ticketResponseGrpc.setMetaInfo(metaInfoGrpc);
+        }
+        Optional.ofNullable(ticket.getIssueClosed()).ifPresent(ticketResponseGrpc::setIssueClosed);
+        Optional.ofNullable(ticket.getIssueOpened()).ifPresent(ticketResponseGrpc::setIssueOpened);
+        Optional.ofNullable(ticket.getState()).ifPresent(ticketResponseGrpc::setState);
+        Optional.ofNullable(ticket.getState()).ifPresent(ticketResponseGrpc::setDescription);
+        Optional.ofNullable(ticket.getDescription()).ifPresent(ticketResponseGrpc::setSupportTicketId);
+        ticketResponseGrpc.build();
+        return ticketResponseGrpc;
     }
 
-
-
-    public static OpenTelemetry initOpenTelemetry(String jaegerHost, int jaegerPort) {
-        // Create a channel towards Jaeger end point
-        ManagedChannel jaegerChannel = ManagedChannelBuilder.forAddress(jaegerHost, jaegerPort).usePlaintext().build();
-        // Export traces to Jaeger
-        JaegerGrpcSpanExporter jaegerExporter = JaegerGrpcSpanExporter.builder().setChannel(jaegerChannel)
-                //.setTimeout(30, TimeUnit.SECONDS)
+    private Ticket buildTicketEntity(AddTicketRequest request) {
+        String ticketId = CommonUtil.uniqueUuid().toString();
+        MetaInfo metaInfo = MetaInfo.builder()
+                .version("1")
+                .createdBy(CommonUtil.nullCheckUuid("d4db0a66-c1f9-4005-99d4-83d79a17fe9f"))
                 .build();
 
-        Resource serviceNameResource = Resource
-                .create(Attributes.of(ResourceAttributes.SERVICE_NAME, OTEL_SERVICE_NAME));
-
-        // Set to process the spans by the Jaeger Exporter
-        SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
-                .addSpanProcessor(SimpleSpanProcessor.create(jaegerExporter))
-                .setResource(Resource.getDefault().merge(serviceNameResource)).build();
-        OpenTelemetrySdk openTelemetry = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
-
-        // it's always a good idea to shut down the SDK cleanly at JVM exit.
-        Runtime.getRuntime().addShutdownHook(new Thread(tracerProvider::shutdown));
-
-        return openTelemetry;
+        Category category = Category.builder()
+                .description(request.getDescription())
+                .name(request.getCategory()).build();
+        //service to fetch Current Agent and Device
+        CurrentAgent currentAgent = currentAgentService.getCurrentAgent(request);
+        Device device = deviceService.getDevice(request);
+        Ticket ticket = Ticket.builder()
+                .id(CommonUtil.nullCheckUuid(ticketId))
+                .supportTicketId(CommonUtil.generateIncrementalNumber())
+                .description("Ticket Support is being worked_HARDCODED")
+                .state("Active_HARDCODED")
+                .metaInfo(metaInfo)
+                .currentAgent(currentAgent)
+                .device(device)
+                .category(category)
+                .issueOpened(CommonUtil.generateSystemDate())
+                .build();
+        return ticket;
     }
 
-}
+    public void updateTicket(UpdateOneTicketByIDRequest request) {
+            log.info("Fetching Ticket by Ticket id : {} or support Ticket id: {}", request.getTicket().getId(), request.getTicket().getSupportTicketId());
+            Ticket ticketDtoResponse = ticketDataService.findByRequest(CommonUtil.nullCheckUuid(request.getTicket().getId()), request.getTicket().getSupportTicketId()).orElseThrow(RecordNotFoundException::new);
+            mapRequestToResponseAndUpdateTicket(request, ticketDtoResponse);
+    }
 
+    private void mapRequestToResponseAndUpdateTicket(UpdateOneTicketByIDRequest request, Ticket ticketDtoResponse) {
+        Ticket.TicketBuilder ticket = Ticket.builder();
+        CurrentAgent.CurrentAgentBuilder currentAgentBuilder = CurrentAgent.builder();
+
+        if (Objects.equals(CommonUtil.nullCheckUuid(request.getTicket().getId()), ticketDtoResponse.getId())){
+            Optional.of(request.getTicket().getSupportTicketId()).ifPresent(ticket::supportTicketId);
+            Optional.of(request.getTicket().getDescription()).ifPresent(ticket::description);
+            Optional.of(request.getTicket().getState()).ifPresent(ticket::state);
+            Optional.of(request.getTicket().getIssueOpened()).ifPresent(ticket::issueOpened);
+            Optional.of(request.getTicket().getIssueClosed()).ifPresent(ticket::issueClosed);
+            Optional.of(request.getTicket().getCurrentAgent().getUserId()).ifPresent(x -> currentAgentBuilder.userId(UUID.fromString(x)));
+            Optional.of(request.getTicket().getCurrentAgent().getFirstName()).ifPresent(currentAgentBuilder::firstName);
+
+    }
+}
+}

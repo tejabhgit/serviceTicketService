@@ -9,20 +9,16 @@ import org.apache.commons.lang3.StringUtils;
 
 public class TicketServiceValidator {
 
-    public static void validateAddRequest(AddTicketRequest request){
-        if (!StringUtils.isNotBlank(request.getDeviceId())){
-            return;
-        }
+    public static boolean validateAddRequest(AddTicketRequest request){
+        return StringUtils.isBlank(request.getDeviceId());
     }
 
-    public static void validateTicketIds(Ticket ticket){
-        if (!StringUtils.isNotBlank(ticket.getId().toString()) || StringUtils.isNotBlank(ticket.getSupportTicketId())){
-            return;
-        }
+    public static boolean validateTicketIds(Ticket ticket){
+        return StringUtils.isBlank(ticket.getId().toString()) && StringUtils.isBlank(ticket.getSupportTicketId());
     }
 
     public static boolean validateGetRequest(GetTicketByIdRequest request){
-        return StringUtils.isNotBlank(request.getId());
+        return (StringUtils.isNotBlank(request.getId()) || StringUtils.isNotBlank(request.getSupportTicketId()));
     }
 
     public static boolean validateFindAllRequest(FindAllTicketsRequest request){

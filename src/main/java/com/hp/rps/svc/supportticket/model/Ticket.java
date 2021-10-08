@@ -1,26 +1,42 @@
 package com.hp.rps.svc.supportticket.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Builder
+@Getter
 @Document(collection = "Ticket")
-public class Ticket {
-	@Id
-	private UUID id;
-	@Indexed(name = "ticketResponses_index", direction = IndexDirection.ASCENDING)
-	private TicketContent ticket;
-	private String supportTicketId;
+public class Ticket implements Serializable {
+    @Id
+    @Indexed
+    private UUID id;
+
+    private CurrentAgent currentAgent;
+
+    private Category category;
+
+    private Device device;
+
 	private MetaInfo metaInfo;
-	private String openTraceId;
-	private String spanId;
+
+    @Indexed(sparse = true)
+    private String issueOpened;
+
+    @Indexed(sparse = true)
+    private String issueClosed;
+
+    @Indexed(sparse = true)
+    private String state;
+
+    @Indexed(sparse = true)
+    private String description;
+
+    @Indexed(sparse = true)
+    private String supportTicketId;
 }

@@ -1,20 +1,44 @@
 package com.hp.rps.svc.supportticket.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
+import lombok.Getter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Document(collection = "MetaInfo")
+import java.util.Date;
+import java.util.UUID;
+
+@Builder
+@Getter
 public class MetaInfo {
+
     private String version;
-    private String createdDate;
-    private String UpdatedDate;
-    private String deletedDate;
-    private String createdBy;
-    private String updatedBy;
-    private String deletedBy;
+
+    //@CreatedBy
+    private UUID createdBy;
+
+    @CreatedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private Date createdDate;
+
+    private UUID lastModifiedBy;
+
+    @LastModifiedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private Date lastModifiedDate;
+
+    private UUID deletedBy;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private Date deletedDate;
+
+    @CreatedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private Date issueOpened;
+
+    @LastModifiedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    private Date issueClosed;
+
 }

@@ -1,26 +1,21 @@
-# my global config
+# my global com.hp.supportticket.config
 global:
-  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  scrape_interval:     15s
+  evaluation_interval: 15s
   # scrape_timeout is set to the global default (10s).
 
-# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
-rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
 
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: 'prometheus'
-    # metrics_path defaults to '/metrics'
-    # scheme defaults to 'http'.
-    static_configs:
-    - targets: ['127.0.0.1:9090']
-
-  - job_name: 'spring-actuator'
+  - job_name: 'svc-rps-support-ticket-spring-boot-prometheus'
+    scrape_interval: 5s
     metrics_path: '/actuator/prometheus'
-    scrape_interval: 10s
     static_configs:
-    - targets: ['192.168.0.100:9090']
+      - targets: ['localhost:9090']
+      # change to yours ip
+      # https://github.com/docker/docker.github.io/issues/6012
+
+  - job_name: 'svc-rps-support-ticket-app'
+    scrape_interval: 5s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'localhost:8080' ]

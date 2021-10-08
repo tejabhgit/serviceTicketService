@@ -47,7 +47,8 @@ dependencies_node:
 dependencies_java:
 	rm -Rf $(JAVA_PLUGINS_DIR)
 	mkdir -p $(JAVA_PLUGINS_DIR)
-	wget https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.40.1/protoc-gen-grpc-java-1.40.1-osx-x86_64.exe -O $(JAVA_PLUGINS_DIR)/protoc-gen-grpc-java-osx.exe
+	wget https://repo.maven.apache.org/maven2/io/grpc/protoc-gen-grpc-java/1.40.1/protoc-gen-grpc-java-1.40.1-linux-x86_64.exe -O $(JAVA_PLUGINS_DIR)/protoc-gen-grpc-java-osx.exe
+	chmod 777 $(JAVA_PLUGINS_DIR)/protoc-gen-grpc-java-osx.exe
 
 ################################################################################
 # Target image
@@ -123,7 +124,7 @@ proto_local: proto
 	mkdir -p ../api-rps-proto-java/.mvn
 	cp -R $(GEN_DIR)/java/com ../api-rps-proto-java/src/main/java/com
 	cp pom.xml ../api-rps-proto-java
-	cp -R .mvn/ ../api-rps-proto-java/.mvn
+	cp -R .mvn/ ../api-rps-proto-java
 	cp mvnw ../api-rps-proto-java
 	cd ../api-rps-proto-java && ./mvnw clean install
 

@@ -1,17 +1,15 @@
 package com.hp.rps.svc.supportticket.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Builder;
+import lombok.Getter;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Document(collection = "CurrentAgent")
+import java.util.UUID;
+
+@Builder
+@Getter
 public class CurrentAgent {
 
-	private String userId;
+	private UUID userId;
 	private String firstName;
 	private String lastName;
 	private String gravatar;

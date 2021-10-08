@@ -1,3 +1,12 @@
 [submodule "api-rps-proto"]
 	path = api-rps-proto
 	url = https://github.azc.ext.hp.com/hp-rps/api-rps-proto.git
+[submodule "api-rps-proto-java"]
+	path = api-rps-proto-java
+	url = git@github.azc.ext.hp.com:hp-rps/api-rps-proto-java.git
+[submodule "api-rps-proto-node"]
+	path = api-rps-proto-node
+	url = git@github.azc.ext.hp.com:hp-rps/api-rps-proto-node.git
+[submodule "api-rps-proto-go"]
+	path = api-rps-proto-go
+	url = git@github.azc.ext.hp.com:hp-rps/api-rps-proto-go.git

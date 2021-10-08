@@ -16,7 +16,7 @@ The following guides illustrate how to use some features concretely:
 * docker compose up -d
 * Start the application in debug/run mode
 * docker compose down -v
-* docker logs mongo-database -f
+* docker logs mongodb -f
 
 ### Reference Documentation
 
@@ -37,6 +37,10 @@ if error check docker ps -a # and stop container by "docker container prune" and
 ######show collections
 ######db.Ticket.find().pretty()
 
+#### db.Ticket.dropIndexes()
+#### db.Ticket.getIndexes()
+
+
 ###useful docker commands
 * docker ps -a
 * docker stop jshdbjshdbv
@@ -46,5 +50,16 @@ if error check docker ps -a # and stop container by "docker container prune" and
 * docker stop $(docker ps -q)
 * docker container prune
 * docker rmi $(docker images -q)
+######
+docker rm -vf $(docker ps -a -q)
+-v: Remove all associated volumes
+-f: Forces the removal. Like, if any containers is running, you need -f to remove them.
+To remove all images,
+docker rmi -f $(docker images -a -q)
 ####prometheus metrics
 * http://localhost:8080/actuator/prometheus
+####Jaeger
+*docker run -d --name jaeger-ui -p 16686:16686 -p 6831:6831/udp jaegertracing/all-in-one:1.9
+http://localhost:16686/search
+http://localhost:9192/jaeger/client/3
+https://medium.com/swlh/tracing-in-spring-boot-with-opentracing-opentelemetry-dd724134ca93

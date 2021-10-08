@@ -1,13 +1,8 @@
 management:
-  server:
-    port: 8080
   endpoints:
     web:
       exposure:
         include: "*"
-  endpoint:
-    shutdown:
-      enabled: true
     health:
       show-details: always
   metrics:
@@ -20,10 +15,16 @@ spring:
   application:
     name: svc-rps-support-ticket
   data:
-    mongo-database:
+    mongodb:
       host: localhost
       port: 27017
+      uuid-representation: standard
       auto-index-creation: true
+  jackson:
+    date-format: "YYYY-MM-dd"
+    serialization:
+      write_dates_as_timestamps: true
+
   cloud:
     function:
       definition: stringSupplier;toUpperCase;stringLogger
@@ -48,18 +49,13 @@ nats:
   spring:
     server: nats://localhost:4222
 
+opentracing:
+  jaeger:
+    http-sender:
+      url: http://localhost:14268/api/traces
+
 server:
   port: 9192
-
-#opentracing:
-#  jaeger:
-#    service-name: svc-rps-support-ticket
-#    enabled: TRUE
-#    udp-sender:
-#      host: jaeger
-#    http-sender:
-#      url: http://localhost:14268/api/traces
-
 
 logging:
   level:

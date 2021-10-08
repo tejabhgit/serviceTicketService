@@ -1,17 +1,15 @@
 package com.hp.rps.svc.supportticket.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Builder;
+import lombok.Getter;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Document(collection = "Device")
+import java.util.UUID;
+
+@Builder
+@Getter
 public class Device {
 
-	private String deviceId;
+	private UUID deviceId;
 	private String hostname;
 	private String state;
 	private String os;

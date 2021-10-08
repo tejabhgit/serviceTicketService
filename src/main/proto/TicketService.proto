@@ -5,7 +5,7 @@ package com.example.grpc.server.grpcserver;
 
 message GetTicketByIdRequest {
   string id = 1;
-
+  string supportTicketId = 2;
 }
 
 message CurrentAgentGrpc {
@@ -28,18 +28,16 @@ message DeviceGrpc {
 }
 
 message TicketContentGrpc {
-  CurrentAgentGrpc currentAgent = 1;
-  CategoryGrpc Category = 2;
-  DeviceGrpc device = 3;
-  string id = 4;
-  string issueOpened = 5;
-  string issueClosed = 6;
-  string state = 7;
-  string description = 8;
-  MetaInfoGrpc metaInfo = 9;
-  string supportTicketId = 10;
-  string openTraceId = 11;
-  string spanId = 12;
+  string id = 1;
+  string supportTicketId = 2;
+  string state = 3;
+  string description = 4;
+  CurrentAgentGrpc currentAgent = 5;
+  CategoryGrpc category = 6;
+  DeviceGrpc device = 7;
+  string issueOpened = 8;
+  string issueClosed = 9;
+  MetaInfoGrpc metaInfo = 10;
 }
 
 message PageableGrpc {
@@ -53,8 +51,7 @@ message PageableGrpc {
 }
 
 message GetTicketByIdResponse {
-  string id = 1;
-  TicketContentGrpc ticket = 2;
+  TicketContentGrpc ticket = 1;
 }
 
 message AddTicketRequest {
@@ -88,10 +85,21 @@ message FindAllTicketsResponse {
 }
 
 message MetaInfoGrpc {
-   string version = 1;
-   string createdDate = 2;
-   string UpdatedDate = 3;
-   string deletedDate = 4;
+  string version = 1;
+  string createdDate = 2;
+  string lastModifiedDate = 3;
+  string deletedDate = 4;
+  string createdBy = 5;
+  string lastModifiedBy = 6;
+  string deletedBy = 7;
+}
+
+message UpdateOneTicketByIDRequest {
+  TicketContentGrpc ticket = 1;
+}
+
+message UpdateOneTicketByIDResponse {
+  int32 responseId = 1;
 }
 
 service TicketService {
@@ -99,20 +107,5 @@ service TicketService {
   rpc getTicketById(GetTicketByIdRequest) returns (GetTicketByIdResponse);
   rpc addTicket(AddTicketRequest) returns (AddTicketResponse);
   rpc deleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
-  rpc loginRequest(LoginRequest) returns (APIResponse);
-}
-
-
-
-message LoginRequest {
-  string username = 1;
-  string password = 2;
-}
-
-message APIResponse {
-  string responseMessage = 1;
-  int32 responseCode = 2;
-}
-
-message Empty {
+  rpc updateOneTicketByID(UpdateOneTicketByIDRequest) returns (UpdateOneTicketByIDResponse);
 }
