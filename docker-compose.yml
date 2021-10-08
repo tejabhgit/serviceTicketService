@@ -37,8 +37,8 @@ services:
 #    hostname: grafana
 
 
-  svc-rps-support-ticket:
-    image: svc-rps-support-ticket
+#  svc-rps-support-ticket:
+#    image: svc-rps-support-ticket
 #    restart: on-failure
 #    environment:
 #      - SPRING_PROFILES_ACTIVE=prod

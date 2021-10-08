@@ -13,15 +13,26 @@ import com.hp.rps.svc.supportticket.model.Ticket;
 import com.hp.rps.svc.supportticket.model.TicketContent;
 import com.hp.rps.svc.supportticket.repository.TicketRepository;
 import com.hp.rps.svc.supportticket.util.CommonUtil;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.annotation.Timed;
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,9 +41,10 @@ import org.springframework.data.domain.Sort;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.extension.annotations.WithSpan;
+//import io.opentelemetry.extension.annotations.WithSpan;
 import reactor.core.publisher.Mono;
-
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import javax.validation.constraints.Null;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +53,15 @@ import java.util.concurrent.TimeUnit;
 @GrpcService
 public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
+    private static final String INSTRUMENTATION_LIBRARY = "io.opentelemetry.example.JaegerExample";
+    private static final String OTEL_SERVICE_NAME = "svc-rps-support-ticket";
+
+   /* public TicketService(OpenTelemetry openTelemetry) {
+        tracer = openTelemetry.getTracer(INSTRUMENTATION_LIBRARY);
+    }
+*/
+
+    //private final Tracer tracer;
 
     private TicketRepository repository;
     private CurrentAgentService currentAgentService;
@@ -61,7 +82,7 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
     @Override
     @Timed
-    @WithSpan
+   // @WithSpan
     public void findAllTickets(FindAllTicketsRequest request, StreamObserver<FindAllTicketsResponse> responseObserver) {
         Page<Ticket> pagedResult = null;
 
@@ -170,7 +191,7 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
     @Override
     @Timed
-    @WithSpan
+    //@WithSpan
     public void getTicketById(GetTicketByIdRequest request, StreamObserver<GetTicketByIdResponse> responseObserver) {
 
         try {
@@ -284,7 +305,7 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
             percentiles = {0.95, 0.99},
             extraTags = {"version", "1.0"}
     )
-    @WithSpan
+   // @WithSpan
     public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
 
         try {
@@ -348,49 +369,6 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
         }
     }
 
-    @Override
-    @WithSpan
-    public void loginRequest(LoginRequest request, StreamObserver<APIResponse> responseObserver) {
-        try {
-            log.info("Doing some work In New span");
-            //Tracer tracer =
-              //      openTelemetry.getTracer("instrumentation-library-name", "1.0.0");
-            //TracingContextUtils.
-
-            Tracer tracer =
-                    GlobalOpenTelemetry.getTracer("instrumentation-library-name");
-
-            Span span = Span.current();
-            span.setAttribute("attribute.a2", "some value");
-            span.addEvent("app.processing2.start", atttributes("321"));
-           // span.addEvent("app.processing2.end", atttributes("321"));
-
-            String username = request.getUsername();
-            String password = request.getPassword();
-
-            APIResponse.Builder response = APIResponse.newBuilder();
-
-            if(username.equals(password)){
-                response.setResponseCode(1).setResponseMessage("Success");
-
-            } else  {
-                response.setResponseCode(0).setResponseMessage("Invalid username or password");
-            }
-
-            responseObserver.onNext(response.build());
-            responseObserver.onCompleted();
-
-        } catch (Exception e) {
-            Status status = Status.fromThrowable(e);
-            log.error("Delete Ticket Exception occurred for" + status.getCode() + " : " + status.getDescription());
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    // Here is our custom exception information
-                    .withDescription(e.getMessage())
-                    .withCause(e)
-                    .asRuntimeException());
-            log.error(e.getMessage());
-        }
-    }
 
     @Override
     @Timed
@@ -423,7 +401,62 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
     }
 
 
-    @WithSpan
+
+
+    @Override
+    // @WithSpan
+    public void loginRequest(LoginRequest request, StreamObserver<APIResponse> responseObserver) {
+        try {
+
+
+
+            OpenTelemetry openTelemetry = initOpenTelemetry("localhost", 14250);
+
+
+            Tracer tracer = openTelemetry.getTracer(INSTRUMENTATION_LIBRARY);
+
+            for (int i = 0; i < 10; i++) {
+
+                Span span = tracer.spanBuilder("Start my wonderful use case").startSpan();
+                log.info("TraceID : {}", span.getSpanContext().getTraceIdAsHexString());
+                span.addEvent("Event 0");
+                // execute my use case - here we simulate a wait
+                doWork();
+                span.addEvent("Event 1");
+                span.end();
+            }
+
+            log.info("Bye");
+
+            String username = request.getUsername();
+            String password = request.getPassword();
+
+            APIResponse.Builder response = APIResponse.newBuilder();
+
+            if(username.equals(password)){
+                response.setResponseCode(1).setResponseMessage("Success");
+
+            } else  {
+                response.setResponseCode(0).setResponseMessage("Invalid username or password");
+            }
+
+            responseObserver.onNext(response.build());
+            responseObserver.onCompleted();
+
+        } catch (Exception e) {
+            Status status = Status.fromThrowable(e);
+            log.error("Delete Ticket Exception occurred for" + status.getCode() + " : " + status.getDescription());
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    // Here is our custom exception information
+                    .withDescription(e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+            log.error(e.getMessage());
+        }
+    }
+
+
+    //  @WithSpan
     private void doSomeWorkNewSpan() {
         log.info("Doing some work In New span");
         Span span = Span.current();
@@ -437,7 +470,38 @@ public class TicketService extends TicketServiceGrpc.TicketServiceImplBase {
 
 
 
+    private void doWork() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // do the right thing here
+        }
+    }
 
+
+
+    public static OpenTelemetry initOpenTelemetry(String jaegerHost, int jaegerPort) {
+        // Create a channel towards Jaeger end point
+        ManagedChannel jaegerChannel = ManagedChannelBuilder.forAddress(jaegerHost, jaegerPort).usePlaintext().build();
+        // Export traces to Jaeger
+        JaegerGrpcSpanExporter jaegerExporter = JaegerGrpcSpanExporter.builder().setChannel(jaegerChannel)
+                //.setTimeout(30, TimeUnit.SECONDS)
+                .build();
+
+        Resource serviceNameResource = Resource
+                .create(Attributes.of(ResourceAttributes.SERVICE_NAME, OTEL_SERVICE_NAME));
+
+        // Set to process the spans by the Jaeger Exporter
+        SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
+                .addSpanProcessor(SimpleSpanProcessor.create(jaegerExporter))
+                .setResource(Resource.getDefault().merge(serviceNameResource)).build();
+        OpenTelemetrySdk openTelemetry = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
+
+        // it's always a good idea to shut down the SDK cleanly at JVM exit.
+        Runtime.getRuntime().addShutdownHook(new Thread(tracerProvider::shutdown));
+
+        return openTelemetry;
+    }
 
 }
 
