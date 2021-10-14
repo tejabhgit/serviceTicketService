@@ -1,6 +1,0 @@
-protoc:
-  version: 3.11.0
-  includes:
-    - ../../_vendor/github.com/gogo/protobuf
-lint:
-  group: uber2

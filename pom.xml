@@ -19,7 +19,7 @@
 		<java.version>17</java.version>
 		<junit.version>5.7.2</junit.version>
 		<commons.version>3.11</commons.version>
-		<grpc.version>2.5.1.RELEASE</grpc.version>
+		<grpc.spring-boot.version>4.5.7</grpc.spring-boot.version>
 		<opentelemetry.version>0.15.0</opentelemetry.version>
 		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
 	</properties>
@@ -85,21 +85,9 @@
 
 		<!--grpc deps-->
 		<dependency>
-			<groupId>net.devh</groupId>
+			<groupId>io.github.lognet</groupId>
 			<artifactId>grpc-spring-boot-starter</artifactId>
-			<version>${grpc.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>io.grpc</groupId>
-					<artifactId>grpc-netty-shaded</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>net.devh</groupId>
-			<artifactId>grpc-client-spring-boot-autoconfigure</artifactId>
-			<version>${grpc.version}</version>
-			<type>pom</type>
+			<version>${grpc.spring-boot.version}</version>
 		</dependency>
 		<dependency> <!-- necessary for Java 9+ -->
 			<groupId>org.apache.tomcat</groupId>
@@ -120,6 +108,15 @@
 		<dependency>
 			<groupId>io.opentelemetry</groupId>
 			<artifactId>opentelemetry-exporter-jaeger</artifactId>
+		</dependency>
+
+		<!--commons package-->
+		<dependency>
+			<groupId>com.hp.rps</groupId>
+			<artifactId>commons</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<scope>system</scope>
+			<systemPath>C:/Users/katkoori/.m2/repository/com/hp/rps/commons/0.0.1-SNAPSHOT/commons-0.0.1-SNAPSHOT.jar</systemPath>
 		</dependency>
 
 	</dependencies>

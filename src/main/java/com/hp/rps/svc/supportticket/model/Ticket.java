@@ -17,19 +17,13 @@ public class Ticket implements Serializable {
     @Indexed
     private UUID id;
 
-    private CurrentAgent currentAgent;
+    private UUID currentAgentUserId;
 
     private Category category;
 
-    private Device device;
+    private UUID deviceId;
 
 	private MetaInfo metaInfo;
-
-    @Indexed(sparse = true)
-    private String issueOpened;
-
-    @Indexed(sparse = true)
-    private String issueClosed;
 
     @Indexed(sparse = true)
     private String state;

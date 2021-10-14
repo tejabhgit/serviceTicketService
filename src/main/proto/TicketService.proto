@@ -8,23 +8,9 @@ message GetTicketByIdRequest {
   string supportTicketId = 2;
 }
 
-message CurrentAgentGrpc {
-  string userId = 1;
-  string firstName = 2;
-  string lastName = 3;
-  string gravatar = 4;
-}
-
 message CategoryGrpc {
   string name = 1;
   string description = 2;
-}
-
-message DeviceGrpc {
-  string deviceId = 1;
-  string hostname = 2;
-  string state = 3;
-  string os = 4;
 }
 
 message TicketContentGrpc {
@@ -32,12 +18,10 @@ message TicketContentGrpc {
   string supportTicketId = 2;
   string state = 3;
   string description = 4;
-  CurrentAgentGrpc currentAgent = 5;
+  string currentAgentUserId = 5;
   CategoryGrpc category = 6;
-  DeviceGrpc device = 7;
-  string issueOpened = 8;
-  string issueClosed = 9;
-  MetaInfoGrpc metaInfo = 10;
+  string deviceId = 7;
+  MetaInfoGrpc metaInfo = 8;
 }
 
 message PageableGrpc {
@@ -92,6 +76,8 @@ message MetaInfoGrpc {
   string createdBy = 5;
   string lastModifiedBy = 6;
   string deletedBy = 7;
+  string issueOpened = 8;
+  string issueClosed = 9;
 }
 
 message UpdateOneTicketByIDRequest {

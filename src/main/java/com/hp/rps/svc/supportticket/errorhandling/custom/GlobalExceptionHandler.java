@@ -18,8 +18,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<ErrorResponse> (error,HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> validationException(ValidationException exp){
+    @ExceptionHandler(ValidationFailedException.class)
+    public ResponseEntity<ErrorResponse> validationException(ValidationFailedException exp){
 
         ErrorResponse error = new ErrorResponse(exp.getMessage(), HttpStatus.NOT_FOUND.value(),System.currentTimeMillis());
 

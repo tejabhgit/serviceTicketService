@@ -34,7 +34,7 @@ public class JaegerConfiguration {
         ManagedChannel jaegerChannel = ManagedChannelBuilder.forAddress(jaegerHost, jaegerPort).usePlaintext().build();
         // Export traces to Jaeger
         JaegerGrpcSpanExporter jaegerExporter = JaegerGrpcSpanExporter.builder().setChannel(jaegerChannel)
-                .setTimeout(3000, TimeUnit.SECONDS).build();
+                .setTimeout(300000000, TimeUnit.SECONDS).build();
 
         Resource serviceNameResource = Resource
                 .create(Attributes.of(ResourceAttributes.SERVICE_NAME, OTEL_SERVICE_NAME));

@@ -49,7 +49,7 @@ public class JaegerExample {
 
         // it is important to initialize your SDK as early as possible in your
         // application's lifecycle
-        OpenTelemetry openTelemetry = JaegerConfiguration.initOpenTelemetry("localhost", 14268);
+        OpenTelemetry openTelemetry = JaegerConfiguration.initOpenTelemetry("localhost", 14250);
 
         // Start the example
         JaegerExample example = new JaegerExample(openTelemetry);

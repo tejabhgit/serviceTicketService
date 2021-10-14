@@ -47,9 +47,9 @@ if error check docker ps -a # and stop container by "docker container prune" and
 
 
 ####remove all containers and images from power shell:
-* docker stop $(docker ps -q)
-* docker container prune
-* docker rmi $(docker images -q)
+docker stop $(docker ps -q)
+docker container prune
+docker rmi $(docker images -q)
 ######
 docker rm -vf $(docker ps -a -q)
 -v: Remove all associated volumes

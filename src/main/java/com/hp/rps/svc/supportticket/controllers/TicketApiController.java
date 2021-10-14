@@ -13,23 +13,25 @@ import com.example.grpc.server.grpcserver.TicketServiceGrpc;
 import com.example.grpc.server.grpcserver.UpdateOneTicketByIDRequest;
 import com.example.grpc.server.grpcserver.UpdateOneTicketByIDResponse;
 import com.hp.rps.svc.supportticket.errorhandling.custom.RecordNotFoundException;
-import com.hp.rps.svc.supportticket.errorhandling.custom.ValidationException;
+import com.hp.rps.svc.supportticket.errorhandling.custom.ValidationFailedException;
 import com.hp.rps.svc.supportticket.services.TicketListResponse;
 import com.hp.rps.svc.supportticket.services.TicketService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
+import org.lognet.springboot.grpc.GRpcService;
 
 @Slf4j
-@GrpcService
+@GRpcService
 @RequiredArgsConstructor
 public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase {
 
     private static final String INSTRUMENTATION_LIBRARY = "io.opentelemetry.example.JaegerExample";
 
     private final TicketService ticketService;
+
+    //private final Mapper mapper;
 
     @Override
     public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
@@ -39,7 +41,8 @@ public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase
             AddTicketResponse addTicketResponse = AddTicketResponse.newBuilder().setResponseId(201).build();
             responseObserver.onNext(addTicketResponse);
             responseObserver.onCompleted();
-        } catch (IllegalArgumentException | ValidationException e) {
+            //static Mapper<String, String> mapper = (x) -> x.get();
+        } catch (IllegalArgumentException | ValidationFailedException e) {
             responseObserver.onError(Status.FAILED_PRECONDITION
                     .withDescription(e.getMessage())
                     .withCause(e)
@@ -61,7 +64,7 @@ public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase
             UpdateOneTicketByIDResponse updateOneTicketByIDResponse = UpdateOneTicketByIDResponse.newBuilder().setResponseId(201).build();
             responseObserver.onNext(updateOneTicketByIDResponse);
             responseObserver.onCompleted();
-        } catch (IllegalArgumentException | ValidationException e) {
+        } catch (IllegalArgumentException | ValidationFailedException e) {
             responseObserver.onError(Status.FAILED_PRECONDITION
                     .withDescription(e.getMessage())
                     .withCause(e)
@@ -86,7 +89,7 @@ public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase
             responseObserver.onNext(getTicketResponse);
             responseObserver.onCompleted();
             log.info("Retrieved Ticket with id :{} ", request.getId());
-        } catch (ValidationException | IllegalArgumentException | RecordNotFoundException e) {
+        } catch (ValidationFailedException | IllegalArgumentException | RecordNotFoundException e) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription(e.getMessage())
                     .withCause(e)
@@ -109,14 +112,14 @@ public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase
 
             FindAllTicketsResponse findAllTicketsResponse = FindAllTicketsResponse.newBuilder().setPageableGrpc(ticketListResponse.getPageableGrpc()).build();
             responseObserver.onNext(findAllTicketsResponse);
-            ticketListResponse.getTicketContentList().stream().filter(listTicketRes -> listTicketRes.hasDevice())
+            ticketListResponse.getTicketContentList().stream().filter(listTicketRes -> listTicketRes.getDeviceId() != null)
                     .forEach(listTicketRes -> {
                         responseObserver.onNext(FindAllTicketsResponse
                                 .newBuilder().setTicket(listTicketRes).build());
                     });
             responseObserver.onCompleted();
             log.info("Found all tickets of size: {}", ticketListResponse.getTicketContentList().size());
-        } catch (ValidationException | RecordNotFoundException | IllegalArgumentException e) {
+        } catch (ValidationFailedException | RecordNotFoundException | IllegalArgumentException e) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription(e.getMessage())
                     .withCause(e)
@@ -141,7 +144,7 @@ public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase
             log.info("Deleted Ticket id : {}", request.getId());
             responseObserver.onNext(deleteTicketResponse);
             responseObserver.onCompleted();
-        } catch (ValidationException | IllegalArgumentException e) {
+        } catch (ValidationFailedException | IllegalArgumentException e) {
             responseObserver.onError(Status.FAILED_PRECONDITION
                     .withDescription(e.getMessage())
                     .withCause(e)
