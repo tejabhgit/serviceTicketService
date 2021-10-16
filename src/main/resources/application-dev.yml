@@ -1,0 +1,66 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    health:
+      show-details: always
+  metrics:
+    export:
+      atlas:
+        enabled: false
+  security:
+    enabled: false
+spring:
+  application:
+    name: svc-rps-support-ticket
+  active:
+    profiles: dev
+  data:
+    mongodb:
+      host: "mongo@dev:0000"
+      port: 0000
+      uuid-representation: standard
+      auto-index-creation: true
+
+  cloud:
+    function:
+      definition: stringSupplier;toUpperCase;stringLogger
+    stream:
+      poller:
+        fixed-delay: 10000
+      bindings:
+        stringSupplier-out-0:
+          destination: strings-topic
+          binder: nats
+        toUpperCase-in-0:
+          destination: strings-topic
+          binder: nats
+        stringLogger-in-0:
+          destination: logger-topic
+          binder: nats
+        toUpperCase-out-0:
+          destination: logger-topic
+          binder: nats
+
+nats:
+  spring:
+    server: nats://localhost:4222
+
+opentracing:
+  jaeger:
+    http-sender:
+      url: http://localhost:14268/api/traces
+
+grpc:
+  server:
+    port: 9190
+
+logging:
+  level:
+    org.springframework: ERROR
+    com.TicketService.supportTicketService: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+    file: "%d %p %c{1.} [%t] %m%n"
+  file: app.log

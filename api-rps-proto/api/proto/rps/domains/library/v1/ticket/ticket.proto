@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package rps.domains.library.v1;
+
+option csharp_namespace = "Rps.Domains.Library.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/services/ticket/v1;ticketv1";
+option java_multiple_files = true;
+option java_outer_classname = "SupportTicketProto";
+option java_package = "com.rps.domains.library.v1";
+option objc_class_prefix = "RDL";
+option php_namespace = "Rps\\Domains\\Library\\V1";
+
+import "rps/types/meta/v1/meta.proto";
+
+enum SupportTicketArea {
+  SOFTWARE = 0;
+  HARDWARE = 1;
+  NEW_PC = 2;
+  VPN_NETWORK = 3;
+  GENERAL = 4;
+}
+
+enum SupportTicketMethod {
+  DONGLE = 0;
+  SOFTWARE_AGENT = 1;
+}
+
+enum SupportTicketStatus {
+  NEW = 0;
+  IN_PROGRESS = 1;
+  ON_HOLD = 2;
+  RESOLVED = 3;
+  CANCELLED = 4;
+}
+
+message SupportTicketMessage {
+  string id = 1;
+  string supportTicketId = 2;
+  SupportTicketStatus state = 3;
+  string issueSummary = 4;
+  string description = 5;
+  string customerName = 6;
+  string customerEmail = 7;
+  SupportTicketArea area = 8;
+  string deviceName = 9;
+  SupportTicketMethod method = 10;
+  string assignee = 11;
+  rps.types.meta.v1.Meta meta = 100;
+}

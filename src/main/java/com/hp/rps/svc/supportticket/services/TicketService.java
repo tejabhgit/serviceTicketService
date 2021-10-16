@@ -116,7 +116,7 @@ public class TicketService {
             Optional.ofNullable(ticket.getMetaInfo().getLastModifiedBy()).ifPresent(lstModBy -> metaInfoGrpc.setLastModifiedBy(lstModBy.toString()));
             Optional.ofNullable(ticket.getMetaInfo().getDeletedBy()).ifPresent(delBy -> metaInfoGrpc.setDeletedBy(delBy.toString()));
             Optional.ofNullable(ticket.getMetaInfo().getIssueClosed()).ifPresent(issClDt -> metaInfoGrpc.setIssueClosed(issClDt.toString()));
-            Optional.ofNullable(ticket.getMetaInfo().getVersion()).ifPresent(metaInfoGrpc::setVersion);
+            metaInfoGrpc.setVersion(ticket.getMetaInfo().getVersion());
             metaInfoGrpc.build();
         }
         TicketContentGrpc.Builder ticketResponseGrpc = TicketContentGrpc.newBuilder();
@@ -138,17 +138,13 @@ public class TicketService {
     }
 
     private Ticket buildTicketEntity(AddTicketRequest request) {
-        String ticketId = CommonUtil.uniqueUuid().toString();
         MetaInfo metaInfo = MetaInfo.builder()
-                .version("1")
-                .createdBy(CommonUtil.nullCheckUuid("d4db0a66-c1f9-4005-99d4-83d79a17fe9f"))
                 .build();
 
         Category category = Category.builder()
                 .description(request.getDescription())
                 .name(request.getCategory()).build();
         Ticket ticket = Ticket.builder()
-                .id(CommonUtil.nullCheckUuid(ticketId))
                 .supportTicketId(CommonUtil.generateIncrementalNumber())
                 .description("Ticket Support is being worked_HARDCODED")
                 .state("Active_HARDCODED")

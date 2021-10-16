@@ -1,44 +1,64 @@
 package com.hp.rps.svc.supportticket.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.io.Serializable;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import java.util.Date;
 import java.util.UUID;
 
 @Builder
-@Getter
-public class MetaInfo implements Serializable {
+@Data
+public class MetaInfo {
 
-    private String version;
+    @Version
+    @Field("VERSION")
+    private long version;
 
-    //@CreatedBy
+    @Field("CREATED_BY")
+    @CreatedBy
     private UUID createdBy;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @DateTimeFormat(style = "M-")
+    @Field("CREATED_DATE")
     @CreatedDate
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private Date createdDate;
 
+    @Field("LAST_MODIFIED_BY")
+    @LastModifiedBy
     private UUID lastModifiedBy;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @DateTimeFormat(style = "M-")
+    @Field("LAST_MODIFIED_DATE")
     @LastModifiedDate
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     private Date lastModifiedDate;
 
+    @Field("DELETED_BY")
     private UUID deletedBy;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    @Temporal(TemporalType.TIMESTAMP)
+    @DateTimeFormat(style = "M-")
+    @Field("DELETED_DATE")
     private Date deletedDate;
 
-    @CreatedDate
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    @Temporal(TemporalType.TIMESTAMP)
+    @DateTimeFormat(style = "M-")
+    @Field("ISSUED_OPENED_DATE")
     private Date issueOpened;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    @Temporal(TemporalType.TIMESTAMP)
+    @DateTimeFormat(style = "M-")
+    @Field("ISSUED_CLOSED_DATE")
     private Date issueClosed;
 
 }

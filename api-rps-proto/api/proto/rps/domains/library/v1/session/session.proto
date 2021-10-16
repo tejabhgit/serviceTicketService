@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rps.domains.library.v1;
+
+option csharp_namespace = "Rps.Domains.Library.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/services/library/v1;ticketv1";
+option java_multiple_files = true;
+option java_outer_classname = "SessionProto";
+option java_package = "com.rps.domains.library.v1";
+option objc_class_prefix = "RDL";
+option php_namespace = "Rps\\Domains\\Library\\V1";
+
+import "rps/types/meta/v1/meta.proto";
+
+message SessionContentGrpc {
+  string id = 1;
+  string ticketUuid = 2;
+  string supportTicketId = 3;
+  rps.types.meta.v1.Meta meta = 100;
+}

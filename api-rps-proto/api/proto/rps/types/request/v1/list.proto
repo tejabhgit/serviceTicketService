@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package rps.types.request.v1;
+
+option csharp_namespace = "Rps.Types.Request.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/types/request/v1;requestv1";
+option java_multiple_files = true;
+option java_outer_classname = "ListProto";
+option java_package = "com.rps.types.request.v1";
+option objc_class_prefix = "RTR";
+option php_namespace = "Rps\\Types\\Request\\V1";
+
+// Generic list params inplemented by all CRUD style list methods.
+message List {
+  // A document that defines the sort order of the result set.
+  // Items are by default retuned in the stored order,
+  // but it is not guaranteed to be that they are in the inserted order.
+  // They are not sorted by the _id field. Sometimes it can be look like it is
+  // sorted by the insertion order but it can change in another request. It is not reliable.
+  string order = 1;
+  // Maximum number of items to return.
+  // Defaults to 50, Maximum allowed is 50
+  int64 item_limit = 2;
+  // Page offset.
+  // Defaults to 0
+  int64 page_offset = 3;
+  // List of fields to populate from the resource in the result.
+  // If empty all fields will be populated.
+  // ID is always populated
+  repeated string field_mask = 4;
+}
