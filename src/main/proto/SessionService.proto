@@ -1,0 +1,22 @@
+syntax = "proto3";
+option java_multiple_files = true;
+
+package com.example.grpc.server.grpcserver;
+
+message CreateOneSessionRequest {
+  CreateSession create_params = 1;
+}
+
+message CreateOneSessionResponse {
+  string response = 1;
+}
+
+message CreateSession{
+  string id = 1;
+  string ticketUuid = 2;
+  string supportTicketId = 3;
+}
+
+service SessionService {
+  rpc addSession(CreateOneSessionRequest) returns (CreateOneSessionResponse);
+}

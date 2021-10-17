@@ -69,7 +69,7 @@ message FindAllTicketsResponse {
 }
 
 message MetaInfoGrpc {
-  string version = 1;
+  int64 version = 1;
   string createdDate = 2;
   string lastModifiedDate = 3;
   string deletedDate = 4;

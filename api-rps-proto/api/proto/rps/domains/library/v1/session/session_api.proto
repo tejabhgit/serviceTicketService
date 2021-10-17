@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package rps.domains.library.v1;
+
+option csharp_namespace = "Rps.Domains.Library.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/services/library/v1;ticketv1";
+option java_generic_services = true;
+option java_multiple_files = true;
+option java_package = "com.rps.domains.library.v1";
+option objc_class_prefix = "RDL";
+option php_namespace = "Rps\\Domains\\Library\\V1";
+
+import "rps/domains/library/v1/session/session.proto";
+import "rps/options/method.proto";
+import "rps/types/request/v1/create.proto";
+import "rps/types/request/v1/delete.proto";
+import "rps/types/request/v1/get.proto";
+import "rps/types/request/v1/list.proto";
+import "rps/types/request/v1/update.proto";
+
+service SessionApi {
+  rpc CreateOneSession(CreateOneSessionRequest) returns (CreateOneSessionResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc",
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc.create"
+      ]
+    };
+  }
+  rpc FindOneSessionByID(FindOneSessionByIDRequest) returns (FindOneSessionByIDResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc",
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc.read"
+      ]
+    };
+  }
+  rpc FindManySessionsByQueryStream(FindManySessionsByQueryStreamRequest) returns (stream FindManySessionsByQueryStreamResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc",
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc.read"
+      ]
+    };
+  }
+  // UpdateOneSessionByID updates a single resource (unary-unary).
+  rpc UpdateOneSessionByID(UpdateOneSessionByIDRequest) returns (UpdateOneSessionByIDResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc"
+      ]
+    };
+  }
+  rpc DeleteOneSessionByID(DeleteOneSessionByIDRequest) returns (DeleteOneSessionByIDResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket/sessioncontentgrpc"
+      ]
+    };
+  }
+}
+
+message CreateOneSessionRequest {
+  rps.types.request.v1.Create create_params = 1;
+  string id = 2;
+  string ticketUuid = 3;
+  string supportTicketId = 4;
+}
+
+message CreateOneSessionResponse {
+  rps.domains.library.v1.SessionContentGrpc created_session = 1;
+  int32 responseId = 2;
+}
+
+message FindOneSessionByIDRequest {
+  rps.types.request.v1.Get get_params = 1;
+  string supportSessionId = 2;
+}
+
+message FindOneSessionByIDResponse {
+  rps.domains.library.v1.SessionContentGrpc session = 1;
+}
+
+message FindManySessionsByQueryStreamRequest {
+  rps.types.request.v1.List list_params = 1;
+  string query = 2;
+}
+
+message FindManySessionsByQueryStreamResponse {
+  rps.domains.library.v1.SessionContentGrpc session = 1;
+}
+
+message UpdateOneSessionByIDRequest {
+  rps.types.request.v1.Update update_params = 1;
+  string id = 2;
+  rps.domains.library.v1.SessionContentGrpc update_session = 3;
+}
+
+message UpdateOneSessionByIDResponse {
+  rps.domains.library.v1.SessionContentGrpc updated_session = 1;
+}
+
+message DeleteOneSessionByIDRequest {
+  rps.types.request.v1.Delete delete_params = 1;
+  string id = 2;
+}
+
+message DeleteOneSessionByIDResponse {
+  string response = 1;
+}

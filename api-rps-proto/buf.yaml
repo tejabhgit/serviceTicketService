@@ -1,0 +1,26 @@
+version: v1beta1
+build:
+  roots:
+    - api/proto
+    - _vendor/github.com/gogo/protobuf
+  excludes:
+    - _vendor/github.com/gogo/protobuf/conformance
+    - _vendor/github.com/gogo/protobuf/jsonpb
+    - _vendor/github.com/gogo/protobuf/proto
+    - _vendor/github.com/gogo/protobuf/protobuf
+    - _vendor/github.com/gogo/protobuf/protoc-gen-gogo
+    - _vendor/github.com/gogo/protobuf/test
+    - _vendor/github.com/gogo/protobuf/vanity
+lint:
+  use:
+    - BASIC
+    - FILE_LOWER_SNAKE_CASE
+  except:
+    - ENUM_NO_ALLOW_ALIAS
+    - IMPORT_NO_PUBLIC
+    - PACKAGE_AFFINITY
+    - PACKAGE_DIRECTORY_MATCH
+    - PACKAGE_SAME_DIRECTORY
+breaking:
+  use:
+    - WIRE_JSON

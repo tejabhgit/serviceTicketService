@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package rps.domains.library.v1;
+
+option csharp_namespace = "Rps.Domains.Library.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/services/ticket/v1;ticketv1";
+option java_generic_services = true;
+option java_multiple_files = true;
+option java_package = "com.rps.domains.library.v1";
+option objc_class_prefix = "RDL";
+option php_namespace = "Rps\\Domains\\Library\\V1";
+
+import "rps/domains/library/v1/ticket/ticket.proto";
+import "rps/options/method.proto";
+import "rps/types/request/v1/create.proto";
+import "rps/types/request/v1/delete.proto";
+import "rps/types/request/v1/get.proto";
+import "rps/types/request/v1/list.proto";
+import "rps/types/request/v1/update.proto";
+
+service TicketApi {
+  rpc CreateOneTicket(CreateOneTicketRequest) returns (CreateOneTicketResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket",
+        "hpbp.io/scopes/rps/domains/ticket.create"
+      ]
+    };
+  }
+  rpc FindOneTicketByID(FindOneTicketByIDRequest) returns (FindOneTicketByIDResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket",
+        "hpbp.io/scopes/rps/domains/ticket.read"
+      ]
+    };
+  }
+  rpc FindManyTicketsByQueryStream(FindManyTicketsByQueryStreamRequest) returns (stream FindManyTicketsByQueryStreamResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket",
+        "hpbp.io/scopes/rps/domains/ticket.read"
+      ]
+    };
+  }
+  // UpdateOneTicketByID updates a single resource (unary-unary).
+  rpc UpdateOneTicketByID(UpdateOneTicketByIDRequest) returns (UpdateOneTicketByIDResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket",
+        "hpbp.io/scopes/rps/domains/ticket.update"
+      ]
+    };
+  }
+  rpc DeleteOneTicketByID(DeleteOneTicketByIDRequest) returns (DeleteOneTicketByIDResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/ticket",
+        "hpbp.io/scopes/rps/domains/ticket.delete"
+      ]
+    };
+  }
+}
+
+message CreateOneTicketRequest {
+  rps.types.request.v1.Create create_params = 1;
+  string customerName = 2;
+  string customerEmail = 3;
+  string issueSummary = 4;
+  string description = 5;
+  rps.domains.library.v1.SupportTicketArea area = 6;
+  string deviceName = 7;
+  rps.domains.library.v1.SupportTicketMethod supportMethod = 8;
+  string assignee = 9;
+}
+
+message CreateOneTicketResponse {
+  string supportTicketId = 1;
+}
+
+message FindOneTicketByIDRequest {
+  rps.types.request.v1.Get get_params = 1;
+  string id = 2;
+  string supportTicketId = 3;
+}
+
+message FindOneTicketByIDResponse {
+  rps.domains.library.v1.SupportTicketMessage ticket = 1;
+}
+
+message FindManyTicketsByQueryStreamRequest {
+  rps.types.request.v1.List list_params = 1;
+  string query = 2;
+}
+
+message FindManyTicketsByQueryStreamResponse {
+  rps.domains.library.v1.SupportTicketMessage ticket = 1;
+}
+
+message UpdateOneTicketByIDRequest {
+  rps.types.request.v1.Update update_params = 1;
+  string id = 2;
+  rps.domains.library.v1.SupportTicketMessage update_ticket = 3;
+}
+
+message UpdateOneTicketByIDResponse {
+  rps.domains.library.v1.SupportTicketMessage updated_ticket = 1;
+}
+
+message DeleteOneTicketByIDRequest {
+  rps.types.request.v1.Delete delete_params = 1;
+  string id = 2;
+}
+
+message DeleteOneTicketByIDResponse {
+  string response = 1;
+}

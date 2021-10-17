@@ -20,10 +20,6 @@ spring:
       port: 27017
       uuid-representation: standard
       auto-index-creation: true
-  jackson:
-    date-format: "YYYY-MM-dd"
-    serialization:
-      write_dates_as_timestamps: true
 
   cloud:
     function:

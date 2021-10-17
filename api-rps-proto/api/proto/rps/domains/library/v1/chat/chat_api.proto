@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package rps.domains.library.v1;
+
+option csharp_namespace = "Rps.Domains.Library.V1";
+option go_package = "github.azc.ext.hp.com/hp-rps/api-rps-proto-go/api/rps/services/library/v1;libraryv1";
+option java_generic_services = true;
+option java_multiple_files = true;
+option java_package = "com.rps.domains.library.v1";
+option objc_class_prefix = "RDL";
+option php_namespace = "Rps\\Domains\\Library\\V1";
+
+import "rps/domains/library/v1/chat/chat.proto";
+import "rps/options/method.proto";
+import "rps/types/request/v1/create.proto";
+import "rps/types/request/v1/get.proto";
+
+service ChatApi {
+  rpc GetChatRoomIdForSupportSession(GetChatRoomForSupportSessionRequest) returns (GetChatRoomForSupportSessionResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/library/chatroom",
+        "hpbp.io/scopes/rps/domains/library/chatroom.read"
+      ]
+    };
+  }
+  rpc CreateChatMessage(CreateChatMessageRequest) returns (CreateChatMessageResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/library/chatmessage",
+        "hpbp.io/scopes/rps/domains/library/chatmessage.create"
+      ]
+    };
+  }
+  rpc GetUnreadChatMessagesForChatRoom(GetUnreadChatMessagesRequest) returns (GetUnreadChatMessagesResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/library/chatmessage",
+        "hpbp.io/scopes/rps/domains/library/chatmessage.read"
+      ]
+    };
+  }
+  rpc FindChatMessagesForSupportSessionAndReceiver(FindChatMessagesForSupportSessionAndReceiverRequest) returns (FindChatMessagesForSupportSessionAndReceiverResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/library/chatmessage",
+        "hpbp.io/scopes/rps/domains/library/chatmessage.read"
+      ]
+    };
+  }
+  rpc FindChatMessageById(FindChatMessageByIdRequest) returns (FindChatMessageByIdResponse) {
+    option (rps.options.method) = {
+      scopes: [
+        "hpbp.io/scopes/rps/domains/library/chatmessage",
+        "hpbp.io/scopes/rps/domains/library/chatmessage.read"
+      ]
+    };
+  }
+}
+
+message GetChatRoomForSupportSessionRequest {
+  rps.types.request.v1.Get get_params = 1;
+  string supportSessionId = 2;
+  string receiverId = 3;
+}
+
+message GetChatRoomForSupportSessionResponse {
+  rps.domains.library.v1.ChatRoom chatRoom = 1;
+}
+
+message CreateChatMessageRequest {
+  rps.types.request.v1.Create create_params = 1;
+  rps.domains.library.v1.ChatMessage chatMessage = 2;
+}
+
+message CreateChatMessageResponse {
+  rps.domains.library.v1.ChatMessage chatMessage = 1;
+}
+
+message GetUnreadChatMessagesRequest {
+  rps.types.request.v1.Get get_params = 1;
+  string supportSessionId = 2;
+  string receiverId = 3;
+}
+
+message GetUnreadChatMessagesResponse {
+  int32 totalUnreadChatMessages = 1;
+}
+
+message FindChatMessagesForSupportSessionAndReceiverRequest {
+  rps.types.request.v1.Get get_params = 1;
+  string supportSessionId = 2;
+  string receiverId = 3;
+}
+
+message FindChatMessagesForSupportSessionAndReceiverResponse {
+  repeated rps.domains.library.v1.ChatMessage chatMessages = 1;
+}
+
+message FindChatMessageByIdRequest {
+  rps.types.request.v1.Get get_params = 1;
+  string chatMessageId = 2;
+}
+
+message FindChatMessageByIdResponse {
+  rps.domains.library.v1.ChatMessage chatMessage = 1;
+}
