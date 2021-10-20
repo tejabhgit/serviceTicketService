@@ -36,7 +36,7 @@ public class TicketApiController extends TicketServiceGrpc.TicketServiceImplBase
     @Override
     public void addTicket(AddTicketRequest request, StreamObserver<AddTicketResponse> responseObserver) {
         try {
-            log.info("Bye");
+            log.info("In addTicket");
             ticketService.addTicket(request);
             AddTicketResponse addTicketResponse = AddTicketResponse.newBuilder().setResponseId(201).build();
             responseObserver.onNext(addTicketResponse);

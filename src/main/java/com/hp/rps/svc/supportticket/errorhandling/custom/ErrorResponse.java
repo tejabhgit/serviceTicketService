@@ -13,3 +13,8 @@ public class ErrorResponse {
     private int statusCode;
     private long timestamp;
 }
+
+/*
+public record ErrorResponse(String message,int statusCode,long timestamp) {
+
+}*/

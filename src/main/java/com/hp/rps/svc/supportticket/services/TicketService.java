@@ -26,12 +26,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,14 +49,15 @@ public class TicketService {
     public TicketListResponse getPagedTicketResponse(FindAllTicketsRequest request) {
         Page<Ticket> pagedResult = null;
         //validations
-        if (!TicketServiceValidator.validateFindAllRequest(request)) {
+        /*if (!TicketServiceValidator.validateFindAllRequest(request)) {
             throw new ValidationFailedException("validation exception sortBy parm cannot be null");
-        }
+        }*/
+
         pagedResult = findAllPagedResponse(request, pagedResult);
         if (pagedResult.isEmpty()) {
             throw new RecordNotFoundException("No Records Found");
         }
-        PageableGrpc pageableGrpc = PageableGrpc.newBuilder()
+        var pageableGrpc = PageableGrpc.newBuilder()
                 .setLast(pagedResult.isLast())
                 .setTotalElements(pagedResult.getTotalElements())
                 .setTotalPages(pagedResult.getTotalPages())
@@ -67,10 +69,12 @@ public class TicketService {
         List<TicketContentGrpc.Builder> listTicketResponse = new ArrayList<TicketContentGrpc.Builder>();
         List<Ticket> listTicketPage = pagedResult.getContent();
         listTicketPage.stream().filter(Objects::nonNull)
-                .forEach(ticketPage -> {
+                .map(ticketPage -> {
                     TicketContentGrpc.Builder ticketContentGrpc = buildTicketResponse(ticketPage);
                     listTicketResponse.add(ticketContentGrpc);
-                });
+                    return listTicketResponse;
+                })
+                .collect(Collectors.toList());
         TicketListResponse ticketListResponse = TicketListResponse.builder()
                 .pageableGrpc(pageableGrpc)
                 .TicketContentList(listTicketResponse)
@@ -80,14 +84,14 @@ public class TicketService {
 
     public TicketContentGrpc.Builder getTicketById(GetTicketByIdRequest request) {
         log.info("Fetching Ticket by Ticket id : {} or support Ticket id: {}", request.getId(), request.getSupportTicketId());
-        Ticket ticket = findByRequest(CommonUtil.nullCheckUuid(request.getId()), request.getSupportTicketId()).orElseThrow(RecordNotFoundException::new);
+        var ticket = findByRequest(CommonUtil.nullCheckUuid(request.getId()), request.getSupportTicketId()).orElseThrow(RecordNotFoundException::new);
         TicketContentGrpc.Builder ticketContentGrpc = buildTicketResponse(ticket);
         return ticketContentGrpc;
     }
 
     public void addTicket(AddTicketRequest request) {
         log.info("Creating a Support Ticket resource {}", request.getDeviceId());
-        Ticket ticket = buildTicketEntity(request);
+        var ticket = buildTicketEntity(request);
         insert(ticket);
         log.info("Successfully added a Support Ticket resource {}", ticket.getId().toString());
     }
@@ -116,7 +120,7 @@ public class TicketService {
             Optional.ofNullable(ticket.getMetaInfo().getLastModifiedBy()).ifPresent(lstModBy -> metaInfoGrpc.setLastModifiedBy(lstModBy.toString()));
             Optional.ofNullable(ticket.getMetaInfo().getDeletedBy()).ifPresent(delBy -> metaInfoGrpc.setDeletedBy(delBy.toString()));
             Optional.ofNullable(ticket.getMetaInfo().getIssueClosed()).ifPresent(issClDt -> metaInfoGrpc.setIssueClosed(issClDt.toString()));
-            metaInfoGrpc.setVersion(ticket.getMetaInfo().getVersion());
+           // metaInfoGrpc.setVersion(ticket.getMetaInfo().getVersion());
             metaInfoGrpc.build();
         }
         TicketContentGrpc.Builder ticketResponseGrpc = TicketContentGrpc.newBuilder();
@@ -141,10 +145,10 @@ public class TicketService {
         MetaInfo metaInfo = MetaInfo.builder()
                 .build();
 
-        Category category = Category.builder()
+        var category = Category.builder()
                 .description(request.getDescription())
                 .name(request.getCategory()).build();
-        Ticket ticket = Ticket.builder()
+        var ticket = Ticket.builder()
                 .supportTicketId(CommonUtil.generateIncrementalNumber())
                 .description("Ticket Support is being worked_HARDCODED")
                 .state("Active_HARDCODED")
@@ -158,7 +162,7 @@ public class TicketService {
 
     public void updateTicket(UpdateOneTicketByIDRequest request) {
             log.info("Fetching Ticket by Ticket id : {} or support Ticket id: {}", request.getTicket().getId(), request.getTicket().getSupportTicketId());
-            Ticket ticketDtoResponse = findByRequest(CommonUtil.nullCheckUuid(request.getTicket().getId()), request.getTicket().getSupportTicketId()).orElseThrow(RecordNotFoundException::new);
+            var ticketDtoResponse = findByRequest(CommonUtil.nullCheckUuid(request.getTicket().getId()), request.getTicket().getSupportTicketId()).orElseThrow(RecordNotFoundException::new);
             mapRequestToResponseAndUpdateTicket(request, ticketDtoResponse);
     }
 
@@ -184,13 +188,13 @@ public class TicketService {
     }
 
     public Page<Ticket> findAllPagedResponse(FindAllTicketsRequest request, Page<Ticket> pagedResult) {
-        Pageable paging = PageRequest.of(request.getPage(), request.getSize(), Sort.by(request.getSortBy()));
+        var paging = PageRequest.of(request.getPage(), request.getSize(), Sort.by(request.getSortBy()));
         pagedResult = Objects.nonNull(paging) ? ticketRepository.findAll(paging) : ticketRepository.findAll(Pageable.unpaged());
         return pagedResult;
     }
 
     public List<Ticket> getAllByExample(Ticket ticket){
-        Example<Ticket> example = Example.of(ticket);
+        var example = Example.of(ticket);
         return ticketRepository.findAll(example);
     }
 }

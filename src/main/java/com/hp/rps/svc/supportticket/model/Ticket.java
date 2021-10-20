@@ -9,10 +9,10 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.UUID;
-
 
 @Builder
 @Data
@@ -23,6 +23,8 @@ public class Ticket implements Serializable {
     @Id
     @Indexed
     @Field("ID")
+    @NotNull(message = "Please provide a UUID")
+    @NotBlank(message = "Please provide a UUID")
     private UUID id;
 
     @Indexed
@@ -30,10 +32,14 @@ public class Ticket implements Serializable {
     private UUID currentAgentUserId;
 
     @Field("CATEGORY")
+    @NotNull(message = "Please provide a CATEGORY")
+    @NotBlank(message = "Please provide a CATEGORY")
     private Category category;
 
     @Indexed
     @Field("DEVICE_ID")
+    @NotNull(message = "Please provide a DEVICE_ID")
+    @NotBlank(message = "Please provide a DEVICE_ID")
     private UUID deviceId;
 
     @Field("META_INFO")
@@ -49,6 +55,8 @@ public class Ticket implements Serializable {
 
     @Field("SUPP_TICKET_ID")
     @Indexed(sparse = true)
+    @NotNull(message = "Please provide a SUPP_TICKET_ID")
+    @NotBlank(message = "Please provide a SUPP_TICKET_ID")
     private String supportTicketId;
 
     @JsonIgnore

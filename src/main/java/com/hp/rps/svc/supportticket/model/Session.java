@@ -9,7 +9,8 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -30,6 +31,8 @@ public class Session implements Serializable {
 
     @Indexed
     @Field("DEVICE_ID")
+    @NotNull(message = "Please provide a DEVICE_ID")
+    @NotBlank(message = "Please provide a DEVICE_ID")
     private UUID deviceId;
 
     @Field("META_INFO")
@@ -37,6 +40,8 @@ public class Session implements Serializable {
 
     @Field("SUPP_TICKET_ID")
     @Indexed(sparse = true)
+    @NotNull(message = "Please provide a SUPP_TICKET_ID")
+    @NotBlank(message = "Please provide a SUPP_TICKET_ID")
     private String supportTicketId;
 
     @JsonIgnore

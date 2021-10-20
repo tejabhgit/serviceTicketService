@@ -1,3 +1,4 @@
+/*
 package com.hp.rps.svc.supportticket.services;
 
 import com.example.grpc.server.grpcserver.AddTicketRequest;
@@ -29,3 +30,4 @@ public class TicketServiceValidator {
         return StringUtils.isNotBlank(request.getId());
     }
 }
+*/
