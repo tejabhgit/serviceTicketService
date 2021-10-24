@@ -110,14 +110,14 @@
 			<artifactId>opentelemetry-exporter-jaeger</artifactId>
 		</dependency>
 
-		<!--commons package-->
+		<!--&lt;!&ndash;commons package&ndash;&gt;
 		<dependency>
 			<groupId>com.hp.rps</groupId>
 			<artifactId>commons</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<scope>system</scope>
 			<systemPath>C:/Users/katkoori/.m2/repository/com/hp/rps/commons/0.0.1-SNAPSHOT/commons-0.0.1-SNAPSHOT.jar</systemPath>
-		</dependency>
+		</dependency>-->
 
 		<dependency>
 			<groupId>javax.persistence</groupId>

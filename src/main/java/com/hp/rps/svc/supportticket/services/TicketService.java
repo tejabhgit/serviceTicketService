@@ -9,6 +9,7 @@ import com.example.grpc.server.grpcserver.MetaInfoGrpc;
 import com.example.grpc.server.grpcserver.PageableGrpc;
 import com.example.grpc.server.grpcserver.TicketContentGrpc;
 import com.example.grpc.server.grpcserver.UpdateOneTicketByIDRequest;
+import com.hp.rps.svc.supportticket.config.JaegerConfiguration;
 import com.hp.rps.svc.supportticket.errorhandling.custom.RecordNotFoundException;
 import com.hp.rps.svc.supportticket.errorhandling.custom.ValidationFailedException;
 import com.hp.rps.svc.supportticket.model.Category;
@@ -17,6 +18,9 @@ import com.hp.rps.svc.supportticket.model.Ticket;
 import com.hp.rps.svc.supportticket.repository.TicketRepository;
 import com.hp.rps.svc.supportticket.util.CommonUtil;
 import io.micrometer.core.annotation.Timed;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +44,8 @@ import java.util.stream.Collectors;
 public class TicketService {
 
     private TicketRepository ticketRepository;
+    private static final String INSTRUMENTATION_LIBRARY = " com.hp.rps.svc.supportticket.services.TicketService";
+
 
     @Autowired
     public void TicketService(TicketRepository ticketRepository) {
@@ -91,6 +97,16 @@ public class TicketService {
 
     public void addTicket(AddTicketRequest request) {
         log.info("Creating a Support Ticket resource {}", request.getDeviceId());
+        OpenTelemetry openTelemetry = JaegerConfiguration.initOpenTelemetry("localhost", 14250);
+        Tracer tracer = openTelemetry.getTracer(INSTRUMENTATION_LIBRARY);
+        Span span = tracer.spanBuilder("Start my wonderful use case").startSpan();
+        log.info("TraceID : {}", span.getSpanContext().getTraceIdAsHexString());
+        log.info("SpanId : {}", span.getSpanContext().getSpanIdAsHexString());
+       span.addEvent("Event 0");
+        doWork();
+        span.addEvent("Event 1");
+        span.end();
+        myWonderfulUseCase();
         var ticket = buildTicketEntity(request);
         insert(ticket);
         log.info("Successfully added a Support Ticket resource {}", ticket.getId().toString());
@@ -99,6 +115,17 @@ public class TicketService {
     @Timed
     public void deleteTicket(DeleteTicketRequest request) {
         log.info("Deleting Ticket by Ticket id : {}", request.getId());
+        //log.info("Creating a Support Ticket resource {}", request.getDeviceId());
+        OpenTelemetry openTelemetry = JaegerConfiguration.initOpenTelemetry("localhost", 14250);
+        Tracer tracer = openTelemetry.getTracer(INSTRUMENTATION_LIBRARY);
+        Span span = tracer.spanBuilder("Start my wonderful use case").startSpan();
+        log.info("TraceID : {}", span.getSpanContext().getTraceIdAsHexString());
+        log.info("SpanId : {}", span.getSpanContext().getSpanIdAsHexString());
+        span.addEvent("Event 0");
+        doWork();
+        span.addEvent("Event 1");
+        span.end();
+        myWonderfulUseCase();
         deleteTicket(CommonUtil.nullCheckUuid(request.getId()));
     }
 
@@ -196,5 +223,19 @@ public class TicketService {
     public List<Ticket> getAllByExample(Ticket ticket){
         var example = Example.of(ticket);
         return ticketRepository.findAll(example);
+    }
+
+
+    private void myWonderfulUseCase() {
+        // Generate a span
+
+    }
+
+    private void doWork() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // do the right thing here
+        }
     }
 }

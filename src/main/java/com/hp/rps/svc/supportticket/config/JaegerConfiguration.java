@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class JaegerConfiguration {
 
-    private static final String OTEL_SERVICE_NAME = "otel-jaeger-ticket";
+    private static final String OTEL_SERVICE_NAME = "svc-rps-support-ticket";
 
     /**
      * Initialize an OpenTelemetry SDK with a Jaeger exporter and a
@@ -34,7 +34,7 @@ public class JaegerConfiguration {
         ManagedChannel jaegerChannel = ManagedChannelBuilder.forAddress(jaegerHost, jaegerPort).usePlaintext().build();
         // Export traces to Jaeger
         JaegerGrpcSpanExporter jaegerExporter = JaegerGrpcSpanExporter.builder().setChannel(jaegerChannel)
-                .setTimeout(300000000, TimeUnit.SECONDS).build();
+                .setTimeout(3000, TimeUnit.SECONDS).build();
 
         Resource serviceNameResource = Resource
                 .create(Attributes.of(ResourceAttributes.SERVICE_NAME, OTEL_SERVICE_NAME));
