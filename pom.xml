@@ -22,6 +22,7 @@
 		<grpc.spring-boot.version>4.5.7</grpc.spring-boot.version>
 		<opentelemetry.version>0.15.0</opentelemetry.version>
 		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
+		<logback.contrib.version>0.1.5</logback.contrib.version>
 	</properties>
 
 	<dependencies>
@@ -110,6 +111,27 @@
 			<artifactId>opentelemetry-exporter-jaeger</artifactId>
 		</dependency>
 
+
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.3</version>
+		</dependency>
+
+		<!-- ch.qos.logback.contrib.jackson.JacksonJsonFormatter -->
+		<dependency>
+			<groupId>ch.qos.logback.contrib</groupId>
+			<artifactId>logback-jackson</artifactId>
+			<!--suppress UnresolvedMavenProperty -->
+			<version>${logback.contrib.version}</version>
+		</dependency>
+
+		<!-- ch.qos.logback.contrib.json.classic.JsonLayout -->
+		<dependency>
+			<groupId>ch.qos.logback.contrib</groupId>
+			<artifactId>logback-json-classic</artifactId>
+			<version>${logback.contrib.version}</version>
+		</dependency>
 		<!--&lt;!&ndash;commons package&ndash;&gt;
 		<dependency>
 			<groupId>com.hp.rps</groupId>
